@@ -109,7 +109,7 @@ Open **http://your-server:8888** and log in with your AD credentials.
 ### Docker Hub
 
 ```bash
-docker pull chrisdfennell/ad-tools:latest
+docker pull fennch/ad-tools:latest
 ```
 
 Then create a `docker-compose.yml` using the example above and run `docker compose up -d`.
@@ -413,12 +413,12 @@ docker compose up -d
 
 ```bash
 # Build and tag
-docker build -t chrisdfennell/ad-tools:latest -t chrisdfennell/ad-tools:1.0.0 .
+docker build -t fennch/ad-tools:latest -t fennch/ad-tools:1.0.0 .
 
 # Push
 docker login
-docker push chrisdfennell/ad-tools:latest
-docker push chrisdfennell/ad-tools:1.0.0
+docker push fennch/ad-tools:latest
+docker push fennch/ad-tools:1.0.0
 ```
 
 ## Contributing
