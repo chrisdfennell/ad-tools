@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}BitLocker Recovery Keys{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>BitLocker Recovery</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-lock me-2"></i>BitLocker Recovery Keys</h4>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="q" class="form-control"
+                   placeholder="Search by computer name or recovery key ID..."
+                   value="{{ query }}" autofocus>
+            <button class="btn btn-primary" type="submit">
+                <i class="fas fa-search me-1"></i>Search
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if query %}
+<div class="card">
+    <div class="card-body">
+        {% if keys %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Computer</th>
+                    <th>Recovery Key ID</th>
+                    <th>Recovery Password</th>
+                    <th>Date Stored</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key in keys %}
+                <tr>
+                    <td>
+                        <i class="fas fa-desktop me-1 text-muted"></i>
+                        <strong>{{ key.computer_name }}</strong>
+                    </td>
+                    <td><small class="text-muted">{{ key.recovery_guid or '—' }}</small></td>
+                    <td>
+                        {% if key.recovery_password %}
+                        <div class="d-flex align-items-center gap-2">
+                            <code class="recovery-key" style="filter: blur(4px); cursor: pointer;"
+                                  onclick="this.style.filter = this.style.filter ? '' : 'blur(4px)'">
+                                {{ key.recovery_password }}
+                            </code>
+                            <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('{{ key.recovery_password }}')"
+                                    title="Copy">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ key.created }}</small></td>
+                    <td>
+                        <a href="{{ url_for('bitlocker.computer_keys', cn=key.computer_name) }}"
+                           class="btn btn-sm btn-outline-primary" title="All keys for this computer">
+                            <i class="fas fa-list"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-lock fa-3x mb-3"></i>
+            <p>No BitLocker recovery keys found matching "{{ query }}".</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-5">
+        <i class="fas fa-lock fa-3x mb-3"></i>
+        <p>Search for a computer name to find its BitLocker recovery keys.</p>
+        <small>Recovery keys are stored in AD when BitLocker is enabled with AD backup.</small>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

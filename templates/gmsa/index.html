@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Group Managed Service Accounts{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>gMSA Accounts</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-cogs me-2"></i>Group Managed Service Accounts <span class="badge bg-secondary">{{ gmsas|length }}</span></h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if gmsas %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>SAM Account</th>
+                    <th>DNS Name</th>
+                    <th>Password Interval</th>
+                    <th>SPNs</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in gmsas %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('gmsa.detail', sam=g.sam) }}" class="fw-bold text-decoration-none">
+                            <i class="fas fa-cogs me-1 text-muted"></i>{{ g.cn }}
+                        </a>
+                    </td>
+                    <td><code>{{ g.sam }}</code></td>
+                    <td><small>{{ g.dns_name }}</small></td>
+                    <td>{{ g.pwd_interval }} days</td>
+                    <td><span class="badge bg-secondary">{{ g.spns|length }}</span></td>
+                    <td>
+                        {% if g.status == 'enabled' %}
+                        <span class="badge bg-success">Enabled</span>
+                        {% else %}
+                        <span class="badge bg-danger">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ g.when_created }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-cogs fa-3x mb-3"></i>
+            <p>No Group Managed Service Accounts found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit' if group else 'Create' }} Dynamic Group{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('dynamic_groups.index') }}" class="text-decoration-none text-muted">Dynamic Groups</a>
+<span class="mx-2">/</span>
+<span>{{ 'Edit' if group else 'Create' }}</span>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="fas fa-magic me-2"></i>{{ 'Edit' if group else 'Create' }} Dynamic Group</h4>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="POST">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Group Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required
+                               value="{{ group.name if group else '' }}" placeholder="e.g. Engineering Department">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="description" class="form-control"
+                               value="{{ group.description if group else '' }}" placeholder="What this group represents">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">LDAP Filter <span class="text-danger">*</span></label>
+                        <textarea name="ldap_filter" class="form-control font-monospace" rows="4" required
+                                  placeholder="(&(objectClass=user)(objectCategory=person)(department=Engineering))">{{ group.ldap_filter if group else '' }}</textarea>
+                        <small class="text-muted">Standard LDAP filter syntax. Must start with <code>(</code> and end with <code>)</code>.</small>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-save me-2"></i>{{ 'Update' if group else 'Create' }} Dynamic Group
+            </button>
+        </form>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-lightbulb me-1"></i>Filter Examples</div>
+            <div class="card-body small">
+                <p><strong>All users in a department:</strong><br>
+                <code>(&(objectClass=user)(objectCategory=person)(department=Engineering))</code></p>
+                <p><strong>Users with expiring passwords (90d):</strong><br>
+                <code>(&(objectClass=user)(objectCategory=person)(!(userAccountControl:1.2.840.113556.1.4.803:=65536)))</code></p>
+                <p><strong>Disabled users:</strong><br>
+                <code>(&(objectClass=user)(objectCategory=person)(userAccountControl:1.2.840.113556.1.4.803:=2))</code></p>
+                <p class="mb-0"><strong>Users without email:</strong><br>
+                <code>(&(objectClass=user)(objectCategory=person)(!(mail=*)))</code></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ user.sam }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.list_users') }}" class="text-decoration-none text-muted">Users</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.detail', sam=user.sam) }}" class="text-decoration-none text-muted">{{ user.sam }}</a>
+<span class="mx-2">/</span>
+<span>Edit</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-pen me-2"></i>Edit User: {{ user.sam }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <!-- Identity -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-id-card me-1"></i> Identity</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" name="givenName" class="form-control" value="{{ user.first_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" name="sn" class="form-control" value="{{ user.last_name }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Display Name</label>
+                            <input type="text" name="displayName" class="form-control" value="{{ user.display_name }}">
+                        </div>
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-address-book me-1"></i> Contact</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="mail" class="form-control" value="{{ user.email }}">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="text" name="telephoneNumber" class="form-control" value="{{ user.phone }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile</label>
+                                <input type="text" name="mobile" class="form-control" value="{{ user.mobile }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-building me-1"></i> Organization</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Title</label>
+                                <input type="text" name="title" class="form-control" value="{{ user.title }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <input type="text" name="department" class="form-control" value="{{ user.department }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Company</label>
+                            <input type="text" name="company" class="form-control" value="{{ user.company }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2">{{ user.description }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Account Expiration -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-calendar-times me-1"></i> Account Expiration</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Account Expires</label>
+                                <input type="date" name="accountExpires" class="form-control"
+                                       value="{{ user.account_expires if user.account_expires != 'Never' else '' }}">
+                                <small class="text-muted">Leave empty for "Never expires".</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Current Value</label>
+                                <input type="text" class="form-control" disabled
+                                       value="{{ user.account_expires }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Extension Attributes -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-puzzle-piece me-1"></i> Extension Attributes</h6>
+                        <div class="row">
+                            {% for i in range(1, 16) %}
+                            {% set attr_name = 'extensionAttribute' ~ i %}
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">extensionAttribute{{ i }}</label>
+                                <input type="text" name="{{ attr_name }}" class="form-control" value="{{ user[attr_name] or '' }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill py-2 fw-bold">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('users.detail', sam=user.sam) }}" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Computers{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Computers</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Domain Computers <span class="badge bg-secondary">{{ computers|length }}</span></h4>
+    <a href="{{ url_for('computers.create') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Create Computer
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('computers.bulk_action') }}" id="bulkForm">
+            <!-- Bulk action bar -->
+            <div class="mb-3 d-flex gap-2 align-items-center flex-wrap" id="bulkBar" style="display:none !important">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label" for="selectAll">Select All</label>
+                </div>
+                <span class="text-muted">|</span>
+                <span class="text-muted small"><span id="selectedCount">0</span> selected</span>
+                <span class="text-muted">|</span>
+                <button type="submit" name="action" value="disable" class="btn btn-sm btn-outline-warning" data-confirm="Disable all selected computers?">
+                    <i class="fas fa-power-off me-1"></i>Disable
+                </button>
+                <button type="submit" name="action" value="enable" class="btn btn-sm btn-outline-success" data-confirm="Enable all selected computers?">
+                    <i class="fas fa-power-off me-1"></i>Enable
+                </button>
+                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger" data-confirm="DELETE all selected computers? This cannot be undone!">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+
+            <table class="table table-hover datatable" style="width:100%">
+                <thead>
+                    <tr>
+                        <th width="30"><input type="checkbox" class="d-none"></th>
+                        <th>Name</th>
+                        <th>DNS Name</th>
+                        <th>Operating System</th>
+                        <th>Status</th>
+                        <th>Last Logon</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in computers %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_dns" value="{{ comp.dn }}" class="bulk-check form-check-input"></td>
+                        <td>
+                            <a href="{{ url_for('computers.detail', cn=comp.cn) }}" class="fw-bold text-decoration-none">
+                                <i class="fas fa-desktop me-1 text-muted"></i>{{ comp.cn }}
+                            </a>
+                        </td>
+                        <td><small>{{ comp.dns_name }}</small></td>
+                        <td>{{ comp.os }} {{ comp.os_version }}</td>
+                        <td>
+                            {% if comp.status == 'enabled' %}
+                            <span class="badge badge-enabled">Enabled</span>
+                            {% else %}
+                            <span class="badge badge-disabled">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ comp.last_logon }}</small></td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('computers.detail', cn=comp.cn) }}" class="btn btn-sm btn-outline-primary action-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if comp.status == 'enabled' %}
+                                <form method="POST" action="{{ url_for('computers.disable', cn=comp.cn) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-warning action-btn" data-confirm="Disable computer '{{ comp.cn }}'?">
+                                        <i class="fas fa-power-off"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('computers.enable', cn=comp.cn) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-success action-btn">
+                                        <i class="fas fa-power-off"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var selectAll = document.getElementById('selectAll');
+    var bulkBar = document.getElementById('bulkBar');
+    var checks = document.querySelectorAll('.bulk-check');
+
+    function updateUI() {
+        var count = document.querySelectorAll('.bulk-check:checked').length;
+        document.getElementById('selectedCount').textContent = count;
+        bulkBar.style.setProperty('display', count > 0 ? 'flex' : 'none', 'important');
+    }
+
+    selectAll.addEventListener('change', function() {
+        checks.forEach(function(cb) { cb.checked = selectAll.checked; });
+        updateUI();
+    });
+    checks.forEach(function(cb) { cb.addEventListener('change', updateUI); });
+})();
+</script>
+{% endblock %}

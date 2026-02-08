@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Lockout Detail{% if user %} - {{ user.sam }}{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('lockout.index') }}" class="text-decoration-none text-muted">Lockout Insight</a>
+<span class="mx-2">/</span>
+<span>{% if user %}{{ user.sam }}{% else %}Detail{% endif %}</span>
+{% endblock %}
+
+{% block content %}
+{% if user %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="fas fa-user-lock me-2"></i>{{ user.display_name }}</h4>
+        <span class="text-muted">{{ user.sam }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if user.is_locked %}
+        <form method="POST" action="{{ url_for('users.unlock', sam=user.sam) }}">
+            <button type="submit" class="btn btn-success"><i class="fas fa-unlock me-1"></i>Unlock Account</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('users.detail', sam=user.sam) }}" class="btn btn-outline-primary">
+            <i class="fas fa-user me-1"></i>View Profile
+        </a>
+    </div>
+</div>
+
+<!-- Status Banner -->
+<div class="alert alert-{{ 'danger' if user.is_locked else 'success' }} d-flex align-items-center mb-4">
+    <i class="fas fa-{{ 'lock' if user.is_locked else 'lock-open' }} fa-2x me-3"></i>
+    <div>
+        <strong>Account is {{ 'LOCKED OUT' if user.is_locked else 'NOT locked' }}</strong>
+        {% if user.is_disabled %}<span class="badge bg-secondary ms-2">Also Disabled</span>{% endif %}
+        {% if user.is_locked %}
+        <br><small>Locked since: {{ user.lockout_time }}</small>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Lockout Information</div>
+            <div class="card-body">
+                <div class="detail-section">
+                    <div class="detail-row">
+                        <div class="detail-label">Lockout Time</div>
+                        <div class="detail-value">
+                            {% if user.is_locked %}
+                            <span class="text-danger fw-bold">{{ user.lockout_time }}</span>
+                            {% else %}
+                            <span class="text-success">Not locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Bad Password Count</div>
+                        <div class="detail-value">
+                            <span class="badge bg-{{ 'danger' if user.bad_pwd_count > 0 else 'success' }}">{{ user.bad_pwd_count }}</span>
+                            {% if policy and policy.threshold > 0 %}
+                            <small class="text-muted ms-1">/ {{ policy.threshold }} threshold</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Last Bad Password</div>
+                        <div class="detail-value">{{ user.bad_pwd_time }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Password Last Set</div>
+                        <div class="detail-value">{{ user.pwd_last_set }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-sign-in-alt me-2 text-info"></i>Logon Information</div>
+            <div class="card-body">
+                <div class="detail-section">
+                    <div class="detail-row">
+                        <div class="detail-label">Last Logon (local DC)</div>
+                        <div class="detail-value">{{ user.last_logon }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Last Logon (replicated)</div>
+                        <div class="detail-value">{{ user.last_logon_replicated }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Total Logon Count</div>
+                        <div class="detail-value">{{ user.logon_count }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">UAC Value</div>
+                        <div class="detail-value"><code>{{ user.uac }}</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if policy %}
+<div class="card mt-4">
+    <div class="card-header"><i class="fas fa-shield-alt me-2"></i>Domain Lockout Policy</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Threshold:</strong> {{ policy.threshold }} attempts
+            </div>
+            <div class="col-md-4">
+                <strong>Duration:</strong> {% if policy.duration_minutes == 0 %}Until admin unlocks{% else %}{{ policy.duration_minutes }} minutes{% endif %}
+            </div>
+            <div class="col-md-4">
+                <strong>Observation Window:</strong> {{ policy.observation_minutes }} minutes
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center text-muted py-5">
+    <i class="fas fa-user-slash fa-3x mb-3"></i>
+    <p>User not found or failed to retrieve lockout details.</p>
+    <a href="{{ url_for('lockout.index') }}" class="btn btn-primary">Back to Lockout Insight</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Copy User: {{ template_user.sam }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.list_users') }}" class="text-decoration-none text-muted">Users</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.detail', sam=template_user.sam) }}" class="text-decoration-none text-muted">{{ template_user.sam }}</a>
+<span class="mx-2">/</span>
+<span>Copy</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-copy me-2"></i>Create User from Template: {{ template_user.display_name }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Creating a new user based on <strong>{{ template_user.sam }}</strong>.
+                    Attributes like department, company, and title are pre-filled. Group memberships can optionally be copied.
+                </div>
+
+                <form method="POST">
+                    <!-- New user identity (required) -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-id-card me-1"></i> New User Identity</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" name="fname" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" name="lname" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" name="username" class="form-control" placeholder="jdoe" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pre-filled from template -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-address-book me-1"></i> Contact (from template)</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="Override or leave empty">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="text" name="phone" class="form-control" value="{{ template_user.phone }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile</label>
+                                <input type="text" name="mobile" class="form-control" value="{{ template_user.mobile }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h6><i class="fas fa-building me-1"></i> Organization (from template)</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Title</label>
+                                <input type="text" name="title" class="form-control" value="{{ template_user.title }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <input type="text" name="department" class="form-control" value="{{ template_user.department }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Company</label>
+                            <input type="text" name="company" class="form-control" value="{{ template_user.company }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2">{{ template_user.description }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Placement -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-sitemap me-1"></i> Placement</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Target OU</label>
+                            <select name="target_ou" class="form-select">
+                                <option value="">Default ({{ config.USER_OU }})</option>
+                                {% for ou in ous %}
+                                <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Group membership copy -->
+                    {% if groups %}
+                    <div class="form-section">
+                        <h6><i class="fas fa-layer-group me-1"></i> Copy Group Memberships</h6>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="copy_groups" id="copyGroups" checked>
+                            <label class="form-check-label" for="copyGroups">
+                                Copy {{ groups|length }} group membership(s) from {{ template_user.sam }}
+                            </label>
+                        </div>
+                        <div class="text-muted small">
+                            {% for g in groups %}
+                            <span class="badge bg-secondary me-1 mb-1">{{ g.cn }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-info w-100 py-2 fw-bold text-white">
+                        <i class="fas fa-copy me-2"></i>Create User from Template
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

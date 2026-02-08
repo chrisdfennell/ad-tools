@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Create Group{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('groups.list_groups') }}" class="text-decoration-none text-muted">Groups</a>
+<span class="mx-2">/</span>
+<span>Create Group</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Create New Group</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Group Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Target OU <span class="text-danger">*</span></label>
+                        <select name="ou_dn" class="form-select" required>
+                            {% for ou in ous %}
+                            <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Group Type</label>
+                        <select name="group_type" class="form-select">
+                            <option value="global_security" selected>Global Security</option>
+                            <option value="domain_local_security">Domain Local Security</option>
+                            <option value="universal_security">Universal Security</option>
+                            <option value="global_distribution">Global Distribution</option>
+                            <option value="domain_local_distribution">Domain Local Distribution</option>
+                            <option value="universal_distribution">Universal Distribution</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                        <i class="fas fa-plus-circle me-2"></i>Create Group
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

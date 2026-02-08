@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block title %}Scheduled Reports{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Scheduled Reports</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-clock me-2"></i>Scheduled Reports & Alerts</h4>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Scheduled Reports -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Scheduled Reports <span class="badge bg-secondary">{{ schedules|length }}</span></h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newScheduleModal">
+                    <i class="fas fa-plus me-1"></i>New Schedule
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if schedules %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Report</th>
+                            <th>Schedule</th>
+                            <th>Recipients</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in schedules %}
+                        <tr>
+                            <td><strong>{{ s.name }}</strong></td>
+                            <td><span class="badge bg-info">{{ report_types.get(s.report_type, {}).get('name', s.report_type) }}</span></td>
+                            <td><small>{{ schedule_options.get(s.schedule, s.schedule) }}</small></td>
+                            <td><small>{{ s.recipients }}</small></td>
+                            <td>
+                                {% if s.enabled %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Paused</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('scheduled_reports.toggle', schedule_id=s.id) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-{{ 'warning' if s.enabled else 'success' }}" title="{{ 'Pause' if s.enabled else 'Resume' }}">
+                                        <i class="fas fa-{{ 'pause' if s.enabled else 'play' }}"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('scheduled_reports.delete', schedule_id=s.id) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-danger" data-confirm="Delete schedule '{{ s.name }}'?">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <p>No scheduled reports configured.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Alert Rules -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Alert Rules <span class="badge bg-secondary">{{ alerts|length }}</span></h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newAlertModal">
+                    <i class="fas fa-plus me-1"></i>New Alert
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if alerts %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Recipients</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in alerts %}
+                        <tr>
+                            <td><strong>{{ a.name }}</strong></td>
+                            <td><span class="badge bg-warning text-dark">{{ alert_types.get(a.alert_type, {}).get('name', a.alert_type) }}</span></td>
+                            <td><small>{{ a.recipients }}</small></td>
+                            <td>
+                                {% if a.enabled %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Paused</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('scheduled_reports.toggle_alert_route', alert_id=a.id) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-{{ 'warning' if a.enabled else 'success' }}">
+                                        <i class="fas fa-{{ 'pause' if a.enabled else 'play' }}"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('scheduled_reports.delete_alert_route', alert_id=a.id) }}" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-danger" data-confirm="Delete alert '{{ a.name }}'?">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <p>No alert rules configured.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Test Email -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>Test Email</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('scheduled_reports.test_email') }}">
+                    <div class="mb-3">
+                        <input type="email" name="recipients" class="form-control" placeholder="test@example.com" required>
+                    </div>
+                    <button class="btn btn-outline-primary w-100">
+                        <i class="fas fa-paper-plane me-1"></i>Send Test
+                    </button>
+                </form>
+                <small class="text-muted mt-2 d-block">Requires SMTP_HOST environment variable.</small>
+            </div>
+        </div>
+
+        <!-- Report Types -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Available Reports</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for key, rt in report_types.items() %}
+                    <li class="list-group-item">
+                        <strong>{{ rt.name }}</strong><br>
+                        <small class="text-muted">{{ rt.description }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Schedule Modal -->
+<div class="modal fade" id="newScheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('scheduled_reports.create') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Scheduled Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Report Type</label>
+                        <select name="report_type" class="form-select" required>
+                            {% for key, rt in report_types.items() %}
+                            <option value="{{ key }}">{{ rt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Schedule</label>
+                        <select name="schedule" class="form-select" required>
+                            {% for key, label in schedule_options.items() %}
+                            <option value="{{ key }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recipients (comma-separated emails)</label>
+                        <input type="text" name="recipients" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Days Threshold (for expiry/stale reports)</label>
+                        <input type="number" name="days" class="form-control" value="30">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- New Alert Modal -->
+<div class="modal fade" id="newAlertModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('scheduled_reports.create_alert_route') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Alert Rule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Alert Type</label>
+                        <select name="alert_type" class="form-select" required>
+                            {% for key, at in alert_types.items() %}
+                            <option value="{{ key }}">{{ at.name }} - {{ at.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recipients (comma-separated emails)</label>
+                        <input type="text" name="recipients" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

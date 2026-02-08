@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Sites & Subnets{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Sites & Subnets</span>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="fas fa-network-wired me-2"></i>AD Sites & Subnets</h4>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-map-marker-alt"></i></div>
+            </div>
+            <div class="stat-value">{{ sites|length }}</div>
+            <div class="stat-label">Sites</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="fas fa-network-wired"></i></div>
+            </div>
+            <div class="stat-value">{{ total_subnets }}</div>
+            <div class="stat-label">Subnets</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="fas fa-server"></i></div>
+            </div>
+            <div class="stat-value">{{ total_servers }}</div>
+            <div class="stat-label">Domain Controllers</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-link"></i></div>
+            </div>
+            <div class="stat-value">{{ links|length }}</div>
+            <div class="stat-label">Site Links</div>
+        </div>
+    </div>
+</div>
+
+<!-- Sites -->
+{% for site in sites %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-map-marker-alt me-2 text-primary"></i>{{ site.cn }}
+            {% if site.location %}<small class="text-muted ms-2">{{ site.location }}</small>{% endif %}
+        </h5>
+        <div>
+            <span class="badge bg-info me-1" title="Servers">{{ site.servers|length }} DC{{ 's' if site.servers|length != 1 }}</span>
+            <span class="badge bg-success" title="Subnets">{{ site.subnets|length }} subnet{{ 's' if site.subnets|length != 1 }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if site.description %}<p class="text-muted mb-3">{{ site.description }}</p>{% endif %}
+
+        <div class="row">
+            <!-- Servers -->
+            <div class="col-md-6">
+                <h6 class="text-muted text-uppercase small mb-2"><i class="fas fa-server me-1"></i>Domain Controllers</h6>
+                {% if site.servers %}
+                <ul class="list-unstyled mb-0">
+                    {% for srv in site.servers %}
+                    <li class="mb-1">
+                        <i class="fas fa-hdd me-1 text-info"></i>
+                        <strong>{{ srv.cn }}</strong>
+                        {% if srv.dns_host %}<small class="text-muted ms-1">({{ srv.dns_host }})</small>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <span class="text-muted small">No servers in this site</span>
+                {% endif %}
+            </div>
+
+            <!-- Subnets -->
+            <div class="col-md-6">
+                <h6 class="text-muted text-uppercase small mb-2"><i class="fas fa-network-wired me-1"></i>Subnets</h6>
+                {% if site.subnets %}
+                <ul class="list-unstyled mb-0">
+                    {% for sub in site.subnets %}
+                    <li class="mb-1">
+                        <i class="fas fa-wifi me-1 text-success"></i>
+                        <code>{{ sub.cn }}</code>
+                        {% if sub.description %}<small class="text-muted ms-1">- {{ sub.description }}</small>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <span class="text-muted small">No subnets assigned</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% if not sites %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        <i class="fas fa-map fa-3x mb-3"></i>
+        <p>No sites found (or unable to query).</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Site Links -->
+{% if links %}
+<div class="card mt-4">
+    <div class="card-header"><h5 class="mb-0"><i class="fas fa-link me-2 text-warning"></i>Site Links</h5></div>
+    <div class="card-body">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Link Name</th>
+                    <th>Connected Sites</th>
+                    <th>Cost</th>
+                    <th>Repl Interval</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for link in links %}
+                <tr>
+                    <td><strong>{{ link.cn }}</strong></td>
+                    <td>
+                        {% for s in link.sites %}
+                        <span class="badge bg-primary me-1">{{ s }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>{{ link.cost }}</td>
+                    <td>{{ link.repl_interval }} min</td>
+                    <td>{{ link.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

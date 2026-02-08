@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block title %}Activity Monitor{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Activity Monitor</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-heartbeat me-2"></i>Real-Time Activity Monitor</h4>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">Auto-refresh:</span>
+        <button class="btn btn-sm btn-outline-success" id="autoRefreshBtn" onclick="toggleAutoRefresh()">
+            <i class="fas fa-sync-alt me-1"></i><span id="autoRefreshLabel">Start</span>
+        </button>
+        <form method="GET" class="d-flex gap-1">
+            <select name="hours" class="form-select form-select-sm" onchange="this.form.submit()" style="width:auto">
+                <option value="1" {% if hours == 1 %}selected{% endif %}>Last 1h</option>
+                <option value="6" {% if hours == 6 %}selected{% endif %}>Last 6h</option>
+                <option value="24" {% if hours == 24 %}selected{% endif %}>Last 24h</option>
+                <option value="72" {% if hours == 72 %}selected{% endif %}>Last 72h</option>
+                <option value="168" {% if hours == 168 %}selected{% endif %}>Last 7d</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<!-- Locked Accounts (most critical) -->
+<div class="card mb-4 {% if locked %}border-danger{% endif %}">
+    <div class="card-header {% if locked %}bg-danger text-white{% endif %} d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-lock me-1"></i>Locked Accounts
+            <span class="badge {% if locked %}bg-light text-danger{% else %}bg-secondary{% endif %}">{{ locked|length }}</span>
+        </span>
+        <button class="btn btn-sm {% if locked %}btn-outline-light{% else %}btn-outline-secondary{% endif %}" onclick="refreshLocked()">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    <div class="card-body" id="lockedSection">
+        {% if locked %}
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Display Name</th>
+                        <th>Locked Since</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="lockedBody">
+                    {% for user in locked %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('users.detail', sam=user.sam) }}" class="fw-bold text-decoration-none">
+                                <i class="fas fa-lock me-1 text-danger"></i>{{ user.sam }}
+                            </a>
+                        </td>
+                        <td>{{ user.display_name }}</td>
+                        <td><small>{{ user.lockout_time }}</small></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-success quick-unlock" data-dn="{{ user.dn }}" data-sam="{{ user.sam }}" onclick="quickUnlock(this)">
+                                <i class="fas fa-unlock me-1"></i>Unlock
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-3">
+            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+            <p class="mb-0">No locked accounts.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Password Changes -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-key me-1"></i>Recent Password Changes
+                <span class="badge bg-secondary">{{ pwd_changes|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if pwd_changes %}
+                <div class="table-responsive" style="max-height:400px;overflow-y:auto">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th>User</th><th>Changed</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for u in pwd_changes[:50] %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('users.detail', sam=u.sam) }}" class="text-decoration-none">{{ u.sam }}</a>
+                                    <small class="text-muted">{{ u.display_name }}</small>
+                                </td>
+                                <td><small>{{ u.pwd_changed }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3"><p class="mb-0">No recent password changes.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Created Accounts -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-user-plus me-1"></i>Recently Created Accounts
+                <span class="badge bg-secondary">{{ created|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if created %}
+                <div class="table-responsive" style="max-height:400px;overflow-y:auto">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th>User</th><th>Status</th><th>Created</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for u in created[:50] %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('users.detail', sam=u.sam) }}" class="text-decoration-none">{{ u.sam }}</a>
+                                </td>
+                                <td>
+                                    <span class="badge {% if u.status == 'enabled' %}badge-enabled{% else %}badge-disabled{% endif %}">{{ u.status }}</span>
+                                </td>
+                                <td><small>{{ u.created }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3"><p class="mb-0">No recently created accounts.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recently Modified Accounts -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-pen me-1"></i>Recently Modified Accounts
+        <span class="badge bg-secondary">{{ modified|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if modified %}
+        <div class="table-responsive" style="max-height:400px;overflow-y:auto">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr><th>User</th><th>Display Name</th><th>Modified</th></tr>
+                </thead>
+                <tbody>
+                    {% for u in modified[:50] %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('users.detail', sam=u.sam) }}" class="text-decoration-none">{{ u.sam }}</a>
+                        </td>
+                        <td>{{ u.display_name }}</td>
+                        <td><small>{{ u.modified }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-3"><p class="mb-0">No recently modified accounts.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var autoRefreshTimer = null;
+
+function quickUnlock(btn) {
+    var dn = btn.dataset.dn;
+    var sam = btn.dataset.sam;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Unlocking...';
+
+    var formData = new FormData();
+    formData.append('dn', dn);
+
+    fetch('{{ url_for("activity.api_unlock") }}', {method: 'POST', body: formData})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            btn.closest('tr').remove();
+            var count = document.querySelectorAll('#lockedBody tr').length;
+            if (count === 0) {
+                document.getElementById('lockedSection').innerHTML =
+                    '<div class="text-center text-muted py-3"><i class="fas fa-check-circle text-success fa-2x mb-2"></i><p class="mb-0">No locked accounts.</p></div>';
+            }
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-unlock me-1"></i>Unlock';
+            alert('Failed: ' + data.message);
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-unlock me-1"></i>Unlock';
+    });
+}
+
+function refreshLocked() {
+    fetch('{{ url_for("activity.api_locked") }}')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var body = document.getElementById('lockedBody');
+        if (!body) return;
+        body.innerHTML = '';
+        data.forEach(function(u) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td><a href="/users/' + u.sam + '/detail" class="fw-bold text-decoration-none"><i class="fas fa-lock me-1 text-danger"></i>' + u.sam + '</a></td>' +
+                '<td>' + u.display_name + '</td>' +
+                '<td><small>' + u.lockout_time + '</small></td>' +
+                '<td><button class="btn btn-sm btn-outline-success quick-unlock" data-dn="' + u.dn + '" data-sam="' + u.sam + '" onclick="quickUnlock(this)"><i class="fas fa-unlock me-1"></i>Unlock</button></td>';
+            body.appendChild(tr);
+        });
+    });
+}
+
+function toggleAutoRefresh() {
+    var label = document.getElementById('autoRefreshLabel');
+    var btn = document.getElementById('autoRefreshBtn');
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+        label.textContent = 'Start';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+    } else {
+        autoRefreshTimer = setInterval(refreshLocked, 15000);
+        label.textContent = 'Stop (15s)';
+        btn.classList.remove('btn-outline-success');
+        btn.classList.add('btn-success');
+        refreshLocked();
+    }
+}
+</script>
+{% endblock %}

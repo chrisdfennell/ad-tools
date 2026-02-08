@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Object Permissions{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Object Permissions</span>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="fas fa-shield-alt me-2"></i>Object ACL / Permissions Viewer</h4>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" name="dn" class="form-control" placeholder="Enter Distinguished Name (e.g. CN=Domain Admins,CN=Users,DC=example,DC=com)" value="{{ dn }}">
+                <button class="btn btn-primary" type="submit"><i class="fas fa-lock me-1"></i>View Permissions</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if result %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-key me-2"></i>ACL for: {{ result.name }}</h5>
+        <span class="badge bg-secondary">{{ result.aces|length }} ACEs</span>
+    </div>
+    <div class="card-body p-0">
+        <small class="text-muted p-3 d-block"><code>{{ result.dn }}</code></small>
+    </div>
+</div>
+
+<!-- Filter controls -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="d-flex gap-3 align-items-center flex-wrap">
+            <strong class="small">Filter:</strong>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="showAllow" checked onchange="filterAces()">
+                <label class="form-check-label small" for="showAllow"><span class="badge bg-success">Allow</span></label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="showDeny" checked onchange="filterAces()">
+                <label class="form-check-label small" for="showDeny"><span class="badge bg-danger">Deny</span></label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="showInherited" checked onchange="filterAces()">
+                <label class="form-check-label small" for="showInherited">Inherited</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="showDirect" checked onchange="filterAces()">
+                <label class="form-check-label small" for="showDirect">Direct</label>
+            </div>
+            <input type="text" class="form-control form-control-sm" placeholder="Search trustee..." id="trusteeFilter" oninput="filterAces()" style="width:200px">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover table-sm mb-0" id="aceTable">
+            <thead>
+                <tr>
+                    <th style="width:80px">Type</th>
+                    <th>Trustee</th>
+                    <th>Rights</th>
+                    <th>Applies To</th>
+                    <th style="width:80px">Inherited</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ace in result.aces %}
+                <tr class="ace-row" data-type="{{ ace.type_name }}" data-inherited="{{ 'yes' if ace.inherited else 'no' }}" data-trustee="{{ ace.trustee_name|lower }}">
+                    <td>
+                        {% if 'Deny' in ace.type_name %}
+                        <span class="badge bg-danger">Deny</span>
+                        {% else %}
+                        <span class="badge bg-success">Allow</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ ace.trustee_name }}</strong></td>
+                    <td>
+                        {% for right in ace.rights_list %}
+                        <span class="badge bg-secondary me-1 mb-1">{{ right }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if ace.guid_name %}
+                        <span class="badge bg-info">{{ ace.guid_name }}</span>
+                        {% else %}
+                        <span class="text-muted small">This object</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ace.inherited %}
+                        <i class="fas fa-level-down-alt text-muted" title="Inherited"></i>
+                        {% else %}
+                        <i class="fas fa-pen text-primary" title="Direct"></i>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% elif dn %}
+<div class="text-center text-muted py-4">
+    <i class="fas fa-exclamation-circle fa-3x mb-3 text-warning"></i>
+    <p>No ACL data returned for this object.</p>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Enter a Distinguished Name above to view the object's access control list. You can also access this page from
+    user/group/computer detail pages via the <strong>Permissions</strong> button.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterAces() {
+    const showAllow = document.getElementById('showAllow').checked;
+    const showDeny = document.getElementById('showDeny').checked;
+    const showInherited = document.getElementById('showInherited').checked;
+    const showDirect = document.getElementById('showDirect').checked;
+    const trusteeFilter = document.getElementById('trusteeFilter').value.toLowerCase();
+
+    document.querySelectorAll('.ace-row').forEach(function(row) {
+        const type = row.dataset.type;
+        const inherited = row.dataset.inherited === 'yes';
+        const trustee = row.dataset.trustee;
+
+        let show = true;
+        if (type.includes('Deny') && !showDeny) show = false;
+        if (type.includes('Allow') && !showAllow) show = false;
+        if (inherited && !showInherited) show = false;
+        if (!inherited && !showDirect) show = false;
+        if (trusteeFilter && !trustee.includes(trusteeFilter)) show = false;
+
+        row.style.display = show ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

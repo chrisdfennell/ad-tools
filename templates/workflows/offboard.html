@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Employee Offboarding{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Offboarding</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-user-slash me-2"></i>Employee Offboarding Workflow</h4>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="POST">
+            <!-- Target User -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-danger me-2">1</span>Select User</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Username (sAMAccountName) <span class="text-danger">*</span></label>
+                        <input type="text" name="sam" class="form-control" required placeholder="e.g. jsmith">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Offboarded By</label>
+                        <input type="text" name="offboarded_by" class="form-control" placeholder="Admin name or ticket #">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-danger me-2">2</span>Offboarding Actions</div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="disable_account" id="chkDisable" checked>
+                        <label class="form-check-label" for="chkDisable">
+                            <strong>Disable Account</strong>
+                            <br><small class="text-muted">Sets the ACCOUNTDISABLE flag in userAccountControl</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="remove_groups" id="chkGroups" checked>
+                        <label class="form-check-label" for="chkGroups">
+                            <strong>Remove from All Groups</strong>
+                            <br><small class="text-muted">Removes the user from all group memberships</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="clear_manager" id="chkManager" checked>
+                        <label class="form-check-label" for="chkManager">
+                            <strong>Clear Manager</strong>
+                            <br><small class="text-muted">Removes the manager attribute</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="set_description" id="chkDesc" checked>
+                        <label class="form-check-label" for="chkDesc">
+                            <strong>Update Description</strong>
+                            <br><small class="text-muted">Sets description to "Offboarded on [date]"</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Move to OU -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-danger me-2">3</span>Move to Disabled OU (Optional)</div>
+                <div class="card-body">
+                    <select name="target_ou" class="form-select">
+                        <option value="">Do not move</option>
+                        {% if ous is defined %}
+                        {% for ou in ous %}
+                        <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <small class="text-muted">Move the disabled account to a "Disabled Users" OU.</small>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold" data-confirm="Proceed with offboarding? This will modify the user account.">
+                <i class="fas fa-user-slash me-2"></i>Execute Offboarding
+            </button>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-list-check me-1"></i>Offboarding Checklist</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Disable AD account</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Remove group memberships</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Clear manager field</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Update description</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Move to disabled OU</li>
+                    <li class="mb-2 text-muted"><i class="far fa-circle me-1"></i> Revoke VPN access (manual)</li>
+                    <li class="mb-2 text-muted"><i class="far fa-circle me-1"></i> Revoke licenses (manual)</li>
+                    <li class="mb-2 text-muted"><i class="far fa-circle me-1"></i> Forward email (manual)</li>
+                    <li class="text-muted"><i class="far fa-circle me-1"></i> Archive mailbox (manual)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><i class="fas fa-exclamation-triangle me-1"></i>Important</div>
+            <div class="card-body small">
+                <p class="mb-2">This workflow automates the AD-related steps of offboarding. Additional manual steps may be required depending on your environment.</p>
+                <p class="mb-0">The account will <strong>not</strong> be deleted. It can be restored from the Recycle Bin if AD Recycle Bin is enabled.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Group Membership{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Bulk Group Membership</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-users-cog me-2"></i>Bulk Group Membership</h4>
+</div>
+
+<div class="row g-4">
+    <!-- Bulk Add -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-user-plus me-2"></i>Bulk Add Members</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('bulk_groups.bulk_add') }}" id="addForm">
+                    <div class="mb-3">
+                        <label class="form-label">Target Group</label>
+                        <div class="position-relative">
+                            <input type="text" id="addGroupSearch" class="form-control" placeholder="Search for a group..." autocomplete="off">
+                            <input type="hidden" name="group_dn" id="addGroupDn">
+                            <div id="addGroupResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Users to Add</label>
+                        <div class="position-relative mb-2">
+                            <input type="text" id="addUserSearch" class="form-control" placeholder="Search users to add..." autocomplete="off">
+                            <div id="addUserResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                        </div>
+                        <div id="addSelectedUsers" class="d-flex flex-wrap gap-1 mb-2"></div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100" id="addSubmitBtn" disabled>
+                        <i class="fas fa-plus me-1"></i>Add All to Group
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Remove -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-user-minus me-2"></i>Bulk Remove Members</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('bulk_groups.bulk_remove') }}" id="removeForm">
+                    <div class="mb-3">
+                        <label class="form-label">Target Group</label>
+                        <div class="position-relative">
+                            <input type="text" id="rmGroupSearch" class="form-control" placeholder="Search for a group..." autocomplete="off">
+                            <input type="hidden" name="group_dn" id="rmGroupDn">
+                            <div id="rmGroupResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Users to Remove</label>
+                        <div class="position-relative mb-2">
+                            <input type="text" id="rmUserSearch" class="form-control" placeholder="Search users to remove..." autocomplete="off">
+                            <div id="rmUserResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                        </div>
+                        <div id="rmSelectedUsers" class="d-flex flex-wrap gap-1 mb-2"></div>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100" id="rmSubmitBtn" disabled>
+                        <i class="fas fa-minus me-1"></i>Remove All from Group
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setupBulkPanel(prefix, groupSearchUrl, userSearchUrl) {
+    const groupSearch = document.getElementById(prefix + 'GroupSearch');
+    const groupDn = document.getElementById(prefix + 'GroupDn');
+    const groupResults = document.getElementById(prefix + 'GroupResults');
+    const userSearch = document.getElementById(prefix + 'UserSearch');
+    const userResults = document.getElementById(prefix + 'UserResults');
+    const selectedDiv = document.getElementById(prefix + 'SelectedUsers');
+    const submitBtn = document.getElementById(prefix + 'SubmitBtn');
+    const selectedUsers = new Map();
+    let timeout;
+
+    function updateSubmitBtn() {
+        submitBtn.disabled = !groupDn.value || selectedUsers.size === 0;
+    }
+
+    function renderSelected() {
+        selectedDiv.innerHTML = '';
+        selectedUsers.forEach(function(name, dn) {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary d-flex align-items-center gap-1';
+            badge.innerHTML = name + ' <i class="fas fa-times" style="cursor:pointer"></i>';
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'member_dns';
+            hidden.value = dn;
+            badge.querySelector('i').addEventListener('click', function() {
+                selectedUsers.delete(dn);
+                renderSelected();
+                updateSubmitBtn();
+            });
+            selectedDiv.appendChild(badge);
+            selectedDiv.appendChild(hidden);
+        });
+    }
+
+    function setupAutocomplete(input, resultsDiv, url, onSelect) {
+        input.addEventListener('input', function() {
+            clearTimeout(timeout);
+            const q = this.value.trim();
+            if (q.length < 2) { resultsDiv.style.display = 'none'; return; }
+            timeout = setTimeout(function() {
+                fetch(url + '?q=' + encodeURIComponent(q))
+                    .then(function(r) { return r.json(); })
+                    .then(function(items) {
+                        resultsDiv.innerHTML = '';
+                        if (items.length === 0) {
+                            resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results</div>';
+                        }
+                        items.forEach(function(item) {
+                            const a = document.createElement('a');
+                            a.className = 'list-group-item list-group-item-action';
+                            a.href = '#';
+                            a.textContent = item.display_name ? (item.display_name + ' (' + item.sam + ')') : (item.cn + ' [' + (item.type_label || '') + ']');
+                            a.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                onSelect(item);
+                                resultsDiv.style.display = 'none';
+                            });
+                            resultsDiv.appendChild(a);
+                        });
+                        resultsDiv.style.display = 'block';
+                    });
+            }, 300);
+        });
+        document.addEventListener('click', function(e) {
+            if (!resultsDiv.contains(e.target) && e.target !== input) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+    }
+
+    setupAutocomplete(groupSearch, groupResults, groupSearchUrl, function(item) {
+        groupDn.value = item.dn;
+        groupSearch.value = item.cn;
+        updateSubmitBtn();
+    });
+
+    setupAutocomplete(userSearch, userResults, userSearchUrl, function(item) {
+        selectedUsers.set(item.dn, item.display_name || item.sam);
+        userSearch.value = '';
+        renderSelected();
+        updateSubmitBtn();
+    });
+}
+
+setupBulkPanel('add',
+    '{{ url_for("bulk_groups.api_search_groups") }}',
+    '{{ url_for("bulk_groups.api_search_users") }}'
+);
+setupBulkPanel('rm',
+    '{{ url_for("bulk_groups.api_search_groups") }}',
+    '{{ url_for("bulk_groups.api_search_users") }}'
+);
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Dynamic Groups{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Dynamic Groups</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-magic me-2"></i>Dynamic Groups</h4>
+    {% if has_permission('dynamic_groups.manage') %}
+    <a href="{{ url_for('dynamic_groups.create') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>New Dynamic Group
+    </a>
+    {% endif %}
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Dynamic groups are virtual groups defined by LDAP filters. They are evaluated on-the-fly against Active Directory
+    and do not create actual AD groups. Use them for reporting, auditing, or identifying users matching specific criteria.
+</div>
+
+{% if groups %}
+<div class="row g-3">
+    {% for group in groups %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-magic me-2 text-primary"></i>{{ group.name }}</h5>
+                {% if group.description %}
+                <p class="text-muted small mb-2">{{ group.description }}</p>
+                {% endif %}
+                <code class="small d-block mb-3 text-break" style="max-height:60px; overflow:hidden">{{ group.ldap_filter }}</code>
+                <small class="text-muted">Created by {{ group.created_by }} on {{ group.created_at }}</small>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <a href="{{ url_for('dynamic_groups.evaluate', group_id=group.id) }}" class="btn btn-sm btn-primary flex-fill">
+                    <i class="fas fa-play me-1"></i>Evaluate
+                </a>
+                {% if has_permission('dynamic_groups.manage') %}
+                <a href="{{ url_for('dynamic_groups.edit', group_id=group.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-pen"></i>
+                </a>
+                <form method="POST" action="{{ url_for('dynamic_groups.delete', group_id=group.id) }}" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger" data-confirm="Delete dynamic group '{{ group.name }}'?">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        <i class="fas fa-magic fa-3x mb-3"></i>
+        <p>No dynamic groups defined yet.</p>
+        {% if has_permission('dynamic_groups.manage') %}
+        <a href="{{ url_for('dynamic_groups.create') }}" class="btn btn-primary">Create Your First Dynamic Group</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}{{ pso.cn }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('fgpp.index') }}" class="text-decoration-none text-muted">Password Policies</a>
+<span class="mx-2">/</span>
+<span>{{ pso.cn }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-sliders-h me-2"></i>{{ pso.cn }}</h4>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="detail-section">
+                    <h6>Policy Settings</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Precedence</div>
+                        <div class="detail-value"><span class="badge bg-primary">{{ pso.precedence }}</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Minimum Password Length</div>
+                        <div class="detail-value">{{ pso.min_length }} characters</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Password History</div>
+                        <div class="detail-value">{{ pso.history_length }} passwords remembered</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Complexity Required</div>
+                        <div class="detail-value">
+                            {% if pso.complexity_enabled %}
+                            <span class="badge bg-success">Yes</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">No</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Reversible Encryption</div>
+                        <div class="detail-value">
+                            {% if pso.reversible_encryption %}
+                            <span class="badge bg-danger">Enabled</span>
+                            {% else %}
+                            <span class="badge bg-success">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h6>Password Age</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Minimum Password Age</div>
+                        <div class="detail-value">{{ pso.min_age_display }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Maximum Password Age</div>
+                        <div class="detail-value">{{ pso.max_age_display }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h6>Account Lockout</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Lockout Threshold</div>
+                        <div class="detail-value">{{ pso.lockout_threshold }} invalid attempts</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Observation Window</div>
+                        <div class="detail-value">{{ pso.lockout_window_display }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Lockout Duration</div>
+                        <div class="detail-value">{{ pso.lockout_duration_display }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h6>Metadata</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Distinguished Name</div>
+                        <div class="detail-value"><small><code>{{ pso.dn }}</code></small></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Created</div>
+                        <div class="detail-value">{{ pso.when_created }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Modified</div>
+                        <div class="detail-value">{{ pso.when_changed }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-bullseye me-2"></i>Applies To</h6>
+                <span class="badge bg-secondary">{{ pso.applies_to_resolved|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if pso.applies_to_resolved %}
+                <ul class="list-group list-group-flush">
+                    {% for target in pso.applies_to_resolved %}
+                    <li class="list-group-item">
+                        {% if target.type == 'group' %}
+                        <i class="fas fa-layer-group me-2 text-muted"></i>
+                        {% elif target.type == 'user' %}
+                        <i class="fas fa-user me-2 text-muted"></i>
+                        {% else %}
+                        <i class="fas fa-question me-2 text-muted"></i>
+                        {% endif %}
+                        <strong>{{ target.cn }}</strong>
+                        {% if target.sam %}<br><small class="text-muted">{{ target.sam }}</small>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-3 text-muted">Not applied to any users or groups.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

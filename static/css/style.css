@@ -1,0 +1,300 @@
+/* === CSS Custom Properties === */
+:root {
+    --sidebar-width: 250px;
+    --sidebar-bg: #1a1d23;
+    --sidebar-hover: #2d3139;
+    --sidebar-active: #0d6efd;
+    --sidebar-text: #a8adb5;
+    --sidebar-text-bright: #ffffff;
+    --topbar-height: 56px;
+    --content-bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text-primary: #212529;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+}
+
+[data-bs-theme="dark"] {
+    --content-bg: #121416;
+    --card-bg: #1e2126;
+    --text-primary: #e1e3e6;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+}
+
+/* === Sidebar === */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    overflow-y: auto;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 20px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--sidebar-text-bright);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-domain {
+    padding: 8px 20px;
+    font-size: 0.75rem;
+    color: var(--sidebar-active);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li.nav-section {
+    padding: 16px 20px 6px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--sidebar-text);
+    opacity: 0.6;
+    font-weight: 600;
+}
+
+.sidebar-nav a {
+    display: block;
+    padding: 10px 20px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text-bright);
+}
+
+.sidebar-nav a.active {
+    background: rgba(13, 110, 253, 0.15);
+    color: var(--sidebar-active);
+    border-left-color: var(--sidebar-active);
+    font-weight: 600;
+}
+
+.sidebar-nav a i {
+    width: 20px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+/* === Main Content === */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--content-bg);
+}
+
+.topbar {
+    height: var(--topbar-height);
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+}
+
+.topbar-breadcrumb {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.content-wrapper {
+    padding: 24px;
+}
+
+/* === Stat Cards === */
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-card .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === Status Badges === */
+.badge-enabled {
+    background-color: #198754;
+}
+
+.badge-disabled {
+    background-color: #dc3545;
+}
+
+.badge-locked {
+    background-color: #fd7e14;
+}
+
+/* === Cards === */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* === DataTables Override === */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
+table.dataTable {
+    color: var(--text-primary);
+}
+
+/* === Detail Page === */
+.detail-section {
+    margin-bottom: 24px;
+}
+
+.detail-section h6 {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row {
+    display: flex;
+    padding: 6px 0;
+}
+
+.detail-label {
+    width: 160px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.detail-value {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+/* === OU Tree === */
+.ou-tree ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.ou-tree > ul {
+    padding-left: 0;
+}
+
+.ou-tree .ou-node {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 2px 0;
+    transition: background 0.2s;
+}
+
+.ou-tree .ou-node:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text-bright);
+}
+
+.ou-tree .ou-node.selected {
+    background: rgba(13, 110, 253, 0.15);
+    color: var(--sidebar-active);
+}
+
+.ou-tree .ou-toggle {
+    width: 20px;
+    display: inline-block;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* === Responsive === */
+@media (max-width: 767.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+/* === Action Buttons === */
+.action-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+/* === Form Styles === */
+.form-section {
+    margin-bottom: 24px;
+}
+
+.form-section h6 {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}

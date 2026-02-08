@@ -1,0 +1,67 @@
+services:
+  ad-tools:
+    # To use Docker Hub image instead of building locally:
+    # image: youruser/ad-tools:latest
+    build: .
+    container_name: ad_tools
+    restart: unless-stopped
+    ports:
+      # Format is HostPort:ContainerPort
+      # Change 8888 to whatever you want to type in your browser
+      - "8888:8000"
+    environment:
+      # SECURITY: Change this to something random
+      - SECRET_KEY=change-me-to-a-random-string
+
+      # AD CONNECTION SETTINGS
+      # Use IP Address of DC to avoid Docker DNS resolution headaches
+      - AD_SERVER_IP=192.168.1.10
+      - AD_DOMAIN=yourdomain
+      - AD_SUFFIX=com
+
+      # SERVICE ACCOUNT CREDENTIALS
+      # This account needs read access to AD (Domain Users is usually enough)
+      # For full functionality (create/modify/delete), use a Domain Admin or
+      # a delegated service account with the appropriate permissions
+      - AD_USER=svc_adtools
+      - AD_PASSWORD=YourSecurePasswordHere
+
+      # TARGET LOCATIONS
+      - BASE_DN=DC=yourdomain,DC=com
+
+      # Where new users are created by default
+      # LDAP reads bottom-up: Child -> Parent -> Domain
+      - USER_OU=OU=Users,DC=yourdomain,DC=com
+
+      # Optional: Override search base for groups and computers
+      # Leave empty to search from BASE_DN
+      - GROUPS_OU=
+      - COMPUTERS_OU=
+
+      # BRANDING (shown in sidebar and page titles)
+      # APP_NAME: The name shown in the sidebar header
+      # DOMAIN_DISPLAY: The domain shown under the app name (auto-detected if empty)
+      - APP_NAME=AD Tools
+      - DOMAIN_DISPLAY=
+
+      # RBAC - Role-Based Access Control
+      # Map AD groups to application roles. Domain Admins always get 'admin'.
+      # HELPDESK_GROUP: Members get limited write access (unlock, reset password)
+      # VIEWER_GROUP: Members get read-only access
+      - HELPDESK_GROUP=
+      - VIEWER_GROUP=
+
+      # SMTP - Email for scheduled reports & alerts (optional)
+      # Leave SMTP_HOST empty to disable email features
+      - SMTP_HOST=
+      - SMTP_PORT=587
+      - SMTP_USER=
+      - SMTP_PASSWORD=
+      - SMTP_FROM=
+      - SMTP_TLS=true
+    volumes:
+      # Persist audit log and settings databases across container restarts
+      - ad_data:/app/data
+
+volumes:
+  ad_data:

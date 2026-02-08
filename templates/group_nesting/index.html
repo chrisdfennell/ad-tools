@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Group Nesting{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Group Nesting</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Group Nesting Visualizer</h4>
+    <a href="{{ url_for('group_nesting.circular') }}" class="btn btn-outline-warning">
+        <i class="fas fa-exclamation-triangle me-1"></i>Check Circular Nesting
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="group" class="form-control"
+                   placeholder="Enter group name..." value="{{ group }}" autofocus>
+            <select name="direction" class="form-select" style="max-width: 200px;">
+                <option value="members" {% if direction == 'members' %}selected{% endif %}>Show Members</option>
+                <option value="memberof" {% if direction == 'memberof' %}selected{% endif %}>Show Member Of</option>
+            </select>
+            <button class="btn btn-primary" type="submit">
+                <i class="fas fa-search me-1"></i>Visualize
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if tree %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            {% if direction == 'members' %}
+            <i class="fas fa-sitemap me-2"></i>Members of {{ tree.cn }}
+            {% else %}
+            <i class="fas fa-level-up-alt me-2"></i>{{ tree.cn }} is member of
+            {% endif %}
+        </h6>
+        {% if direction == 'members' and tree.effective_user_count is defined %}
+        <span class="badge bg-info">{{ tree.effective_user_count }} effective users</span>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if direction == 'members' %}
+        <div class="nesting-tree">
+            {{ render_member_tree(tree) }}
+        </div>
+        {% else %}
+        <div class="nesting-tree">
+            {{ render_parent_tree(tree) }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% elif group %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        <p>No results found for "{{ group }}".</p>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-5">
+        <i class="fas fa-project-diagram fa-3x mb-3"></i>
+        <p>Enter a group name to visualize its nesting structure.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% macro render_member_tree(node) %}
+<ul class="list-unstyled ms-3">
+    <li>
+        {% if node.type == 'group' %}
+        <i class="fas fa-layer-group text-primary me-1"></i>
+        <strong>{{ node.cn }}</strong>
+        {% if node.circular %}
+        <span class="badge bg-danger ms-1"><i class="fas fa-sync-alt me-1"></i>Circular Reference!</span>
+        {% else %}
+        <small class="text-muted ms-2">({{ node.direct_users }} users, {{ node.direct_groups }} groups)</small>
+        {% endif %}
+        {% elif node.type == 'user' %}
+        <i class="fas fa-user text-success me-1"></i>
+        {{ node.cn }}
+        {% if node.sam %}<small class="text-muted">({{ node.sam }})</small>{% endif %}
+        {% elif node.type == 'computer' %}
+        <i class="fas fa-desktop text-info me-1"></i>
+        {{ node.cn }}
+        {% else %}
+        <i class="fas fa-question text-muted me-1"></i>
+        {{ node.cn }}
+        {% endif %}
+
+        {% if node.children and not node.circular %}
+        {% for child in node.children %}
+        {{ render_member_tree(child) }}
+        {% endfor %}
+        {% endif %}
+    </li>
+</ul>
+{% endmacro %}
+
+{% macro render_parent_tree(node) %}
+<ul class="list-unstyled ms-3">
+    <li>
+        <i class="fas fa-layer-group text-primary me-1"></i>
+        <strong>{{ node.cn }}</strong>
+        {% if node.circular %}
+        <span class="badge bg-danger ms-1"><i class="fas fa-sync-alt me-1"></i>Circular!</span>
+        {% endif %}
+
+        {% if node.parents and not node.circular %}
+        {% for parent in node.parents %}
+        {{ render_parent_tree(parent) }}
+        {% endfor %}
+        {% endif %}
+    </li>
+</ul>
+{% endmacro %}
+
+{% block scripts %}
+<style>
+.nesting-tree ul {
+    border-left: 2px solid var(--bs-border-color);
+    padding-left: 1.5rem;
+}
+.nesting-tree li {
+    padding: 4px 0;
+}
+</style>
+{% endblock %}

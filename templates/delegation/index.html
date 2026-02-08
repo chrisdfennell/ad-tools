@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Delegated Permissions{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Delegated Permissions</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Delegated Permissions <span class="badge bg-secondary">{{ delegations|length }}</span></h4>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Showing <strong>non-inherited</strong> ACEs on Organizational Units. These represent delegated permissions
+    that were explicitly granted. <span class="badge bg-danger">Dangerous</span> permissions are flagged.
+</div>
+
+<!-- Lookup specific object ACL -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('delegation.acl') }}" class="d-flex gap-2">
+            <input type="text" name="dn" class="form-control" placeholder="Enter a DN to view its full ACL...">
+            <button type="submit" class="btn btn-primary text-nowrap"><i class="fas fa-lock me-1"></i>View ACL</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if delegations %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>OU</th>
+                    <th>Type</th>
+                    <th>Principal</th>
+                    <th>Rights</th>
+                    <th>Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in delegations %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('delegation.acl', dn=d.ou_dn) }}" class="text-decoration-none">{{ d.ou_name }}</a>
+                        <br><small class="text-muted">{{ d.ou_dn }}</small>
+                    </td>
+                    <td>
+                        {% if 'Deny' in d.type %}
+                        <span class="badge bg-danger">{{ d.type }}</span>
+                        {% else %}
+                        <span class="badge bg-success">{{ d.type }}</span>
+                        {% endif %}
+                    </td>
+                    <td><code>{{ d.principal }}</code></td>
+                    <td><small>{{ d.rights }}</small></td>
+                    <td>
+                        {% if d.dangerous %}
+                        <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Dangerous</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Normal</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-shield-alt fa-3x mb-3 text-success"></i>
+            <p>No non-inherited delegations found on OUs.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

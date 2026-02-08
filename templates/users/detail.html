@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% block title %}{{ user.display_name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.list_users') }}" class="text-decoration-none text-muted">Users</a>
+<span class="mx-2">/</span>
+<span>{{ user.sam }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">{{ user.display_name }}</h4>
+        <span class="text-muted">{{ user.upn }}</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('users.edit', sam=user.sam) }}" class="btn btn-outline-primary">
+            <i class="fas fa-pen me-1"></i>Edit
+        </a>
+        <a href="{{ url_for('users.copy', sam=user.sam) }}" class="btn btn-outline-info">
+            <i class="fas fa-copy me-1"></i>Copy
+        </a>
+        {% if user.status == 'enabled' %}
+        <form method="POST" action="{{ url_for('users.disable', sam=user.sam) }}">
+            <button class="btn btn-outline-warning" data-confirm="Disable user '{{ user.sam }}'?">
+                <i class="fas fa-user-slash me-1"></i>Disable
+            </button>
+        </form>
+        {% elif user.status == 'disabled' %}
+        <form method="POST" action="{{ url_for('users.enable', sam=user.sam) }}">
+            <button class="btn btn-outline-success">
+                <i class="fas fa-user-check me-1"></i>Enable
+            </button>
+        </form>
+        {% endif %}
+        {% if user.status == 'locked' %}
+        <form method="POST" action="{{ url_for('users.unlock', sam=user.sam) }}">
+            <button class="btn btn-outline-success">
+                <i class="fas fa-unlock me-1"></i>Unlock
+            </button>
+        </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('users.delete', sam=user.sam) }}">
+            <button class="btn btn-outline-danger" data-confirm="DELETE user '{{ user.sam }}'? This cannot be undone!">
+                <i class="fas fa-trash me-1"></i>Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Info -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <!-- Status Badge -->
+                <div class="mb-4">
+                    {% if user.status == 'enabled' %}
+                    <span class="badge badge-enabled fs-6"><i class="fas fa-check-circle me-1"></i>Enabled</span>
+                    {% elif user.status == 'disabled' %}
+                    <span class="badge badge-disabled fs-6"><i class="fas fa-times-circle me-1"></i>Disabled</span>
+                    {% elif user.status == 'locked' %}
+                    <span class="badge badge-locked fs-6"><i class="fas fa-lock me-1"></i>Locked</span>
+                    {% endif %}
+                </div>
+
+                <!-- Photo -->
+                <div class="text-center mb-3">
+                    <a href="{{ url_for('photos.view', sam=user.sam) }}">
+                        <img src="{{ url_for('photos.raw', sam=user.sam) }}" alt="{{ user.display_name }}"
+                             class="rounded-circle" style="width:80px; height:80px; object-fit:cover;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                        <i class="fas fa-user-circle fa-5x text-muted" style="display:none;"></i>
+                    </a>
+                </div>
+
+                <!-- Identity -->
+                <div class="detail-section">
+                    <h6>Identity</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">First Name</div>
+                        <div class="detail-value">{{ user.first_name }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Last Name</div>
+                        <div class="detail-value">{{ user.last_name }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Display Name</div>
+                        <div class="detail-value">{{ user.display_name }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Username</div>
+                        <div class="detail-value"><code>{{ user.sam }}</code></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">UPN</div>
+                        <div class="detail-value">{{ user.upn }}</div>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="detail-section">
+                    <h6>Contact</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">{{ user.email or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Phone</div>
+                        <div class="detail-value">{{ user.phone or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Mobile</div>
+                        <div class="detail-value">{{ user.mobile or '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- Organization -->
+                <div class="detail-section">
+                    <h6>Organization</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Title</div>
+                        <div class="detail-value">{{ user.title or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value">{{ user.department or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Company</div>
+                        <div class="detail-value">{{ user.company or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Description</div>
+                        <div class="detail-value">{{ user.description or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Manager</div>
+                        <div class="detail-value">{{ user.manager or '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- Account Info -->
+                <div class="detail-section">
+                    <h6>Account</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Distinguished Name</div>
+                        <div class="detail-value"><small><code>{{ user.dn }}</code></small></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Last Logon</div>
+                        <div class="detail-value">{{ user.last_logon }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Password Last Set</div>
+                        <div class="detail-value">{{ user.pwd_last_set or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Created</div>
+                        <div class="detail-value">{{ user.when_created }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Last Modified</div>
+                        <div class="detail-value">{{ user.when_changed }}</div>
+                    </div>
+                </div>
+
+                <!-- Extension Attributes -->
+                {% set ext_attrs = [] %}
+                {% for i in range(1, 16) %}
+                    {% set attr_name = 'extensionAttribute' ~ i %}
+                    {% if user[attr_name] %}
+                        {% if ext_attrs.append(i) %}{% endif %}
+                    {% endif %}
+                {% endfor %}
+                {% if ext_attrs %}
+                <div class="detail-section">
+                    <h6>Extension Attributes</h6>
+                    {% for i in range(1, 16) %}
+                    {% set attr_name = 'extensionAttribute' ~ i %}
+                    {% if user[attr_name] %}
+                    <div class="detail-row">
+                        <div class="detail-label">extensionAttribute{{ i }}</div>
+                        <div class="detail-value">{{ user[attr_name] }}</div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Activity Timeline -->
+        {% if timeline %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Activity Timeline</h6>
+                <span class="badge bg-secondary">{{ timeline|length }}</span>
+            </div>
+            <div class="card-body p-0" style="max-height:300px; overflow-y:auto">
+                <ul class="list-group list-group-flush">
+                    {% for event in timeline[:15] %}
+                    <li class="list-group-item py-2 px-3">
+                        <div class="d-flex justify-content-between">
+                            <small class="fw-bold">
+                                {% if 'delete' in event.action %}<i class="fas fa-trash text-danger me-1"></i>
+                                {% elif 'create' in event.action %}<i class="fas fa-plus-circle text-success me-1"></i>
+                                {% elif 'modify' in event.action %}<i class="fas fa-pen text-info me-1"></i>
+                                {% elif 'reset' in event.action or 'password' in event.action %}<i class="fas fa-key text-warning me-1"></i>
+                                {% elif 'unlock' in event.action %}<i class="fas fa-unlock text-success me-1"></i>
+                                {% elif 'disable' in event.action %}<i class="fas fa-user-slash text-danger me-1"></i>
+                                {% elif 'enable' in event.action %}<i class="fas fa-user-check text-success me-1"></i>
+                                {% elif 'group' in event.action %}<i class="fas fa-layer-group text-primary me-1"></i>
+                                {% else %}<i class="fas fa-circle text-muted me-1"></i>{% endif %}
+                                {{ event.action }}
+                            </small>
+                            <small class="text-{{ 'success' if event.result == 'success' else 'danger' }}">{{ event.result }}</small>
+                        </div>
+                        <small class="text-muted">{{ event.timestamp }} by {{ event.user }}</small>
+                        {% if event.details %}<br><small class="text-muted">{{ event.details[:100] }}</small>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Password Reset -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-key me-2"></i>Reset Password</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('users.pwd_reset', sam=user.sam) }}">
+                    <div class="mb-3">
+                        <input type="password" name="new_password" class="form-control" placeholder="New password" required>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="must_change" id="mustChange">
+                        <label class="form-check-label" for="mustChange">Must change at next logon</label>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="fas fa-key me-1"></i>Reset Password
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Group Membership -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Group Membership</h6>
+                <span class="badge bg-secondary">{{ groups|length }}</span>
+            </div>
+            <div class="card-body">
+                <!-- Add to Group -->
+                <div class="mb-3">
+                    <form method="POST" action="{{ url_for('users.add_to_group', sam=user.sam) }}" class="d-flex gap-2">
+                        <div class="flex-grow-1 position-relative">
+                            <input type="text" id="groupSearch" class="form-control form-control-sm" placeholder="Search for a group..." autocomplete="off">
+                            <input type="hidden" name="group_dn" id="groupDn">
+                            <div id="groupResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary" id="addGroupBtn" disabled>
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body p-0 pt-0">
+                {% if groups %}
+                <ul class="list-group list-group-flush">
+                    {% for group in groups %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-layer-group me-2 text-muted"></i>
+                            {{ group.cn }}
+                        </span>
+                        <form method="POST" action="{{ url_for('users.remove_from_group', sam=user.sam) }}" class="d-inline">
+                            <input type="hidden" name="group_dn" value="{{ group.dn }}">
+                            <button class="btn btn-sm btn-outline-danger" data-confirm="Remove '{{ user.sam }}' from group '{{ group.cn }}'?">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-3 text-muted">No group memberships.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Move to OU -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-arrows-alt me-2"></i>Move to OU</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('users.move', sam=user.sam) }}">
+                    <div class="mb-3">
+                        <select name="target_ou" class="form-select form-select-sm" required>
+                            <option value="">Select target OU...</option>
+                            {% for ou in ous %}
+                            <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-outline-secondary w-100" data-confirm="Move user '{{ user.sam }}' to a different OU?">
+                        <i class="fas fa-arrows-alt me-1"></i>Move User
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const groupSearch = document.getElementById('groupSearch');
+    const groupResults = document.getElementById('groupResults');
+    const groupDnInput = document.getElementById('groupDn');
+    const addGroupBtn = document.getElementById('addGroupBtn');
+    let groupTimeout;
+
+    groupSearch.addEventListener('input', function () {
+        clearTimeout(groupTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            groupResults.style.display = 'none';
+            return;
+        }
+        groupTimeout = setTimeout(function () {
+            fetch('{{ url_for("users.search_groups_api") }}?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(groups => {
+                    groupResults.innerHTML = '';
+                    if (groups.length === 0) {
+                        groupResults.innerHTML = '<div class="list-group-item text-muted">No groups found</div>';
+                    }
+                    groups.forEach(function (g) {
+                        const item = document.createElement('a');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.href = '#';
+                        item.textContent = g.cn + ' (' + g.type_label + ')';
+                        item.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            groupDnInput.value = g.dn;
+                            groupSearch.value = g.cn;
+                            groupResults.style.display = 'none';
+                            addGroupBtn.disabled = false;
+                        });
+                        groupResults.appendChild(item);
+                    });
+                    groupResults.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!groupResults.contains(e.target) && e.target !== groupSearch) {
+            groupResults.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

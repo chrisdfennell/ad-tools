@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}SPN Management{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>SPN Management</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-tags me-2"></i>Service Principal Names</h4>
+    <form method="GET" class="d-flex gap-2">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search SPNs..."
+               value="{{ query }}" style="width:250px">
+        <button class="btn btn-sm btn-primary"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if results %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>SAM Name</th>
+                    <th>Type</th>
+                    <th>SPNs</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in results %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('spn.detail', sam=obj.sam) }}" class="fw-bold text-decoration-none">
+                            {% if obj.type == 'computer' %}
+                            <i class="fas fa-desktop me-1 text-muted"></i>
+                            {% elif obj.type == 'gmsa' %}
+                            <i class="fas fa-cogs me-1 text-muted"></i>
+                            {% else %}
+                            <i class="fas fa-user me-1 text-muted"></i>
+                            {% endif %}
+                            {{ obj.cn }}
+                        </a>
+                    </td>
+                    <td><code>{{ obj.sam }}</code></td>
+                    <td><span class="badge bg-secondary">{{ obj.type }}</span></td>
+                    <td>
+                        <span class="badge bg-info">{{ obj.spn_count }}</span>
+                        {% for spn in obj.spns[:3] %}
+                        <br><small class="text-muted"><code>{{ spn }}</code></small>
+                        {% endfor %}
+                        {% if obj.spn_count > 3 %}
+                        <br><small class="text-muted">...and {{ obj.spn_count - 3 }} more</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('spn.detail', sam=obj.sam) }}" class="btn btn-sm btn-outline-primary" title="Manage SPNs">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-tags fa-3x mb-3"></i>
+            <p>No objects with SPNs found{{ ' matching "' + query + '"' if query else '' }}.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

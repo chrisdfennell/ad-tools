@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Users{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Users</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">All Users <span class="badge bg-secondary">{{ users|length }}</span></h4>
+    <a href="{{ url_for('users.create') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-1"></i>Create User
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('users.bulk_action') }}" id="bulkForm">
+            <!-- Bulk action bar -->
+            <div class="mb-3 d-flex gap-2 align-items-center flex-wrap" id="bulkBar" style="display:none !important">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label" for="selectAll">Select All</label>
+                </div>
+                <span class="text-muted">|</span>
+                <span class="text-muted small"><span id="selectedCount">0</span> selected</span>
+                <span class="text-muted">|</span>
+                <button type="submit" name="action" value="disable" class="btn btn-sm btn-outline-warning" data-confirm="Disable all selected users?">
+                    <i class="fas fa-user-slash me-1"></i>Disable
+                </button>
+                <button type="submit" name="action" value="enable" class="btn btn-sm btn-outline-success" data-confirm="Enable all selected users?">
+                    <i class="fas fa-user-check me-1"></i>Enable
+                </button>
+                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger" data-confirm="DELETE all selected users? This cannot be undone!">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+
+            <table class="table table-hover datatable" style="width:100%">
+                <thead>
+                    <tr>
+                        <th width="30"><input type="checkbox" class="d-none"></th>
+                        <th>Username</th>
+                        <th>Display Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Last Logon</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_dns" value="{{ user.dn }}" class="bulk-check form-check-input"></td>
+                        <td>
+                            <a href="{{ url_for('users.detail', sam=user.sam) }}" class="fw-bold text-decoration-none">
+                                {{ user.sam }}
+                            </a>
+                        </td>
+                        <td>{{ user.display_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.department }}</td>
+                        <td>
+                            {% if user.status == 'enabled' %}
+                            <span class="badge badge-enabled">Enabled</span>
+                            {% elif user.status == 'disabled' %}
+                            <span class="badge badge-disabled">Disabled</span>
+                            {% elif user.status == 'locked' %}
+                            <span class="badge badge-locked">Locked</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ user.last_logon }}</small></td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('users.detail', sam=user.sam) }}" class="btn btn-sm btn-outline-primary action-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('users.edit', sam=user.sam) }}" class="btn btn-sm btn-outline-secondary action-btn" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a href="{{ url_for('users.copy', sam=user.sam) }}" class="btn btn-sm btn-outline-info action-btn" title="Copy/Template">
+                                    <i class="fas fa-copy"></i>
+                                </a>
+                                {% if user.status == 'enabled' %}
+                                <form method="POST" action="{{ url_for('users.disable', sam=user.sam) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning action-btn" title="Disable" data-confirm="Disable user '{{ user.sam }}'?">
+                                        <i class="fas fa-user-slash"></i>
+                                    </button>
+                                </form>
+                                {% elif user.status == 'disabled' %}
+                                <form method="POST" action="{{ url_for('users.enable', sam=user.sam) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success action-btn" title="Enable">
+                                        <i class="fas fa-user-check"></i>
+                                    </button>
+                                </form>
+                                {% elif user.status == 'locked' %}
+                                <form method="POST" action="{{ url_for('users.unlock', sam=user.sam) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success action-btn" title="Unlock">
+                                        <i class="fas fa-unlock"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var selectAll = document.getElementById('selectAll');
+    var bulkBar = document.getElementById('bulkBar');
+    var checks = document.querySelectorAll('.bulk-check');
+
+    function updateUI() {
+        var count = document.querySelectorAll('.bulk-check:checked').length;
+        document.getElementById('selectedCount').textContent = count;
+        bulkBar.style.setProperty('display', count > 0 ? 'flex' : 'none', 'important');
+    }
+
+    selectAll.addEventListener('change', function() {
+        checks.forEach(function(cb) { cb.checked = selectAll.checked; });
+        updateUI();
+    });
+    checks.forEach(function(cb) { cb.addEventListener('change', updateUI); });
+})();
+</script>
+{% endblock %}

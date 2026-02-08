@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Replication Status{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Replication Status</span>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="fas fa-sync-alt me-2"></i>AD Replication Status</h4>
+
+<!-- Domain Controllers -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0"><i class="fas fa-server me-2 text-primary"></i>Domain Controllers</h5>
+        <span class="badge bg-primary">{{ data.dcs|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if data.dcs %}
+        <table class="table table-hover table-sm mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>DNS Hostname</th>
+                    <th>Operating System</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dc in data.dcs %}
+                <tr>
+                    <td><i class="fas fa-server me-1 text-primary"></i><strong>{{ dc.cn }}</strong></td>
+                    <td><code>{{ dc.dns_host }}</code></td>
+                    <td>{{ dc.os }}</td>
+                    <td><small>{{ dc.when_created }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">No domain controllers found.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Replication Connections -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0"><i class="fas fa-exchange-alt me-2 text-success"></i>Replication Connections</h5>
+        <span class="badge bg-success">{{ data.connections|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if data.connections %}
+        <table class="table table-hover table-sm mb-0">
+            <thead>
+                <tr>
+                    <th>From (Source)</th>
+                    <th></th>
+                    <th>To (Destination)</th>
+                    <th>Status</th>
+                    <th>Type</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conn in data.connections %}
+                <tr>
+                    <td><i class="fas fa-server me-1 text-muted"></i><strong>{{ conn.from_server }}</strong></td>
+                    <td><i class="fas fa-arrow-right text-success"></i></td>
+                    <td><i class="fas fa-server me-1 text-muted"></i><strong>{{ conn.to_server }}</strong></td>
+                    <td>
+                        {% if conn.enabled %}
+                        <span class="badge bg-success">Enabled</span>
+                        {% else %}
+                        <span class="badge bg-danger">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if conn.auto_generated %}
+                        <span class="badge bg-info">KCC Auto</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Manual</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ conn.when_created }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">No replication connections found.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Replication Topology Visualization -->
+{% if data.dcs|length > 1 %}
+<div class="card">
+    <div class="card-header"><h5 class="mb-0"><i class="fas fa-project-diagram me-2 text-info"></i>Topology Summary</h5></div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for dc in data.dcs %}
+            <div class="col-md-4 col-lg-3">
+                <div class="border rounded p-3 text-center">
+                    <i class="fas fa-server fa-2x text-primary mb-2 d-block"></i>
+                    <strong>{{ dc.cn }}</strong>
+                    <br><small class="text-muted">{{ dc.dns_host }}</small>
+                    <br><small class="text-muted">{{ dc.os }}</small>
+                    {% set inbound = data.connections|selectattr('to_server', 'equalto', dc.cn)|list|length %}
+                    {% set outbound = data.connections|selectattr('from_server', 'equalto', dc.cn)|list|length %}
+                    <div class="mt-2">
+                        <span class="badge bg-success" title="Inbound"><i class="fas fa-arrow-down me-1"></i>{{ inbound }}</span>
+                        <span class="badge bg-info" title="Outbound"><i class="fas fa-arrow-up me-1"></i>{{ outbound }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

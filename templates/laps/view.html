@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}LAPS - {{ computer.cn }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('laps.index') }}" class="text-decoration-none text-muted">LAPS Passwords</a>
+<span class="mx-2">/</span>
+<span>{{ computer.cn }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-key me-2"></i>{{ computer.cn }} - LAPS Password</h4>
+    <a href="{{ url_for('computers.detail', cn=computer.cn) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-desktop me-1"></i>Computer Details
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="detail-section">
+                    <h6>Computer Info</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Computer Name</div>
+                        <div class="detail-value">{{ computer.cn }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">DNS Name</div>
+                        <div class="detail-value">{{ computer.dns_name or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Operating System</div>
+                        <div class="detail-value">{{ computer.os or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            {% if computer.status == 'enabled' %}
+                            <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h6>LAPS Details</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">LAPS Type</div>
+                        <div class="detail-value"><span class="badge bg-info">{{ computer.laps_type }}</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Account</div>
+                        <div class="detail-value"><code>{{ computer.account }}</code></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Password</div>
+                        <div class="detail-value">
+                            {% if computer.encrypted %}
+                            <span class="text-muted fst-italic">{{ computer.password }}</span>
+                            {% else %}
+                            <div class="input-group" style="max-width: 400px;">
+                                <input type="password" class="form-control font-monospace" id="lapsPassword"
+                                       value="{{ computer.password }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()"
+                                        title="Show/Hide">
+                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" type="button" onclick="copyPassword()"
+                                        title="Copy">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Password Expiry</div>
+                        <div class="detail-value">{{ computer.expiry or 'Not set' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePassword() {
+    const input = document.getElementById('lapsPassword');
+    const icon = document.getElementById('toggleIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function copyPassword() {
+    const input = document.getElementById('lapsPassword');
+    navigator.clipboard.writeText(input.value).then(function() {
+        const btn = event.currentTarget;
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(function() { btn.innerHTML = origHTML; }, 1500);
+    });
+}
+</script>
+{% endblock %}

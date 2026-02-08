@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Stale Objects{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Stale Objects</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-clock me-2"></i>Stale Objects</h4>
+    <div class="d-flex gap-2 align-items-center">
+    <a href="{{ url_for('reports.stale_objects_export', days=days, type=obj_type) }}" class="btn btn-sm btn-outline-success" title="Export CSV">
+        <i class="fas fa-download me-1"></i>CSV
+    </a>
+    <form method="GET" class="d-flex gap-2 align-items-center">
+        <select name="type" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+            <option value="users" {% if obj_type == 'users' %}selected{% endif %}>Users</option>
+            <option value="computers" {% if obj_type == 'computers' %}selected{% endif %}>Computers</option>
+        </select>
+        <label class="form-label mb-0 text-nowrap">inactive for</label>
+        <select name="days" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+            <option value="30" {% if days == 30 %}selected{% endif %}>30 days</option>
+            <option value="60" {% if days == 60 %}selected{% endif %}>60 days</option>
+            <option value="90" {% if days == 90 %}selected{% endif %}>90 days</option>
+            <option value="180" {% if days == 180 %}selected{% endif %}>180 days</option>
+            <option value="365" {% if days == 365 %}selected{% endif %}>1 year</option>
+        </select>
+    </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if objects %}
+        <form method="POST" action="{{ url_for('users.bulk_action') if obj_type == 'users' else url_for('computers.bulk_action') }}" id="bulkForm">
+            <div class="mb-3 d-flex gap-2 align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label" for="selectAll">Select All</label>
+                </div>
+                <span class="text-muted">|</span>
+                <span class="text-muted small"><span id="selectedCount">0</span> of {{ objects|length }} selected</span>
+                <span class="text-muted">|</span>
+                <button type="submit" name="action" value="disable" class="btn btn-sm btn-outline-warning" data-confirm="Disable all selected {{ obj_type }}?">
+                    <i class="fas fa-ban me-1"></i>Disable Selected
+                </button>
+            </div>
+            <table class="table table-hover datatable" style="width:100%">
+                <thead>
+                    <tr>
+                        <th width="30"><input type="checkbox" class="d-none"></th>
+                        <th>Name</th>
+                        <th>Username</th>
+                        {% if obj_type == 'computers' %}<th>OS</th>{% endif %}
+                        <th>Last Logon</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in objects %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_dns" value="{{ obj.dn }}" class="bulk-check form-check-input"></td>
+                        <td>
+                            {% if obj_type == 'users' %}
+                            <a href="{{ url_for('users.detail', sam=obj.sam) }}" class="fw-bold text-decoration-none">{{ obj.cn }}</a>
+                            {% else %}
+                            <a href="{{ url_for('computers.detail', cn=obj.cn) }}" class="fw-bold text-decoration-none">{{ obj.cn }}</a>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ obj.sam }}</code></td>
+                        {% if obj_type == 'computers' %}<td>{{ obj.os }}</td>{% endif %}
+                        <td><small>{{ obj.last_logon }}</small></td>
+                        <td><small>{{ obj.when_created }}</small></td>
+                        <td>
+                            {% if obj.status == 'enabled' %}
+                            <span class="badge badge-enabled">Enabled</span>
+                            {% else %}
+                            <span class="badge badge-disabled">Disabled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+            <p>No stale {{ obj_type }} found (inactive > {{ days }} days).</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('selectAll').addEventListener('change', function() {
+    document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = this.checked);
+    updateCount();
+});
+document.querySelectorAll('.bulk-check').forEach(cb => cb.addEventListener('change', updateCount));
+function updateCount() {
+    document.getElementById('selectedCount').textContent = document.querySelectorAll('.bulk-check:checked').length;
+}
+</script>
+{% endblock %}

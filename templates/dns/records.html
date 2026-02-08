@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}DNS Records: {{ zone_name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('dns.zones') }}" class="text-decoration-none text-muted">DNS</a>
+<span class="mx-2">/</span>
+<span>{{ zone_name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-globe me-2"></i>{{ zone_name }} <span class="badge bg-secondary">{{ records|length }} records</span></h4>
+    <a href="{{ url_for('dns.zones') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>All Zones
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if records %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Hostname</th>
+                    <th>Type</th>
+                    <th>Data</th>
+                    <th>TTL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in records %}
+                <tr>
+                    <td>
+                        <i class="fas fa-{% if rec.type == 'A' %}server{% elif rec.type == 'AAAA' %}server{% elif rec.type == 'CNAME' %}link{% elif rec.type == 'MX' %}envelope{% elif rec.type == 'SRV' %}cog{% elif rec.type == 'NS' %}sitemap{% elif rec.type == 'PTR' %}undo{% elif rec.type == 'TXT' %}file-alt{% else %}cube{% endif %} me-2 text-muted"></i>
+                        <strong>{{ rec.hostname }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge {% if rec.type == 'A' %}bg-primary{% elif rec.type == 'AAAA' %}bg-info{% elif rec.type == 'CNAME' %}bg-success{% elif rec.type == 'MX' %}bg-warning text-dark{% elif rec.type == 'SRV' %}bg-secondary{% elif rec.type == 'NS' %}bg-dark{% elif rec.type == 'TXT' %}bg-light text-dark{% else %}bg-secondary{% endif %}">
+                            {{ rec.type }}
+                        </span>
+                    </td>
+                    <td><code>{{ rec.data }}</code></td>
+                    <td>{{ rec.ttl }}s</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-globe fa-3x mb-3"></i>
+            <p>No DNS records found in this zone.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

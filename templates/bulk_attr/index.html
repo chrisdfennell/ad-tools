@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Attribute Editor{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Bulk Attribute Editor</span>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="fas fa-edit me-2"></i>Bulk Attribute Editor</h4>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="POST" id="bulkForm">
+            <!-- Step 1: Search and select objects -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-primary me-2">1</span>Select Objects</div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <select id="objType" class="form-select form-select-sm">
+                                <option value="users">Users</option>
+                                <option value="computers">Computers</option>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search by name or username...">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-sm btn-primary w-100" onclick="searchObjects()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div id="searchResults" style="max-height:200px; overflow-y:auto; display:none" class="border rounded p-2 mb-3">
+                    </div>
+
+                    <!-- Selected Objects -->
+                    <div class="border rounded p-2" style="min-height:60px">
+                        <small class="text-muted d-block mb-1">Selected Objects (<span id="selectedCount">0</span>):</small>
+                        <div id="selectedObjects"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Attribute and Value -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-primary me-2">2</span>Attribute & Value</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Attribute</label>
+                            <select name="attribute" class="form-select" required>
+                                <option value="">Select attribute...</option>
+                                {% for attr in attributes %}
+                                <option value="{{ attr }}">{{ attr }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">New Value</label>
+                            <input type="text" name="value" class="form-control" placeholder="New value..." id="valueInput">
+                        </div>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="clear" value="1" id="clearCheck" onchange="document.getElementById('valueInput').disabled = this.checked">
+                        <label class="form-check-label" for="clearCheck">
+                            Clear attribute (remove value from all selected objects)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-warning btn-lg w-100 py-3 fw-bold" data-confirm="Modify the selected attribute on all selected objects?">
+                <i class="fas fa-edit me-2"></i>Apply Bulk Change
+            </button>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-info-circle me-1"></i>Instructions</div>
+            <div class="card-body small">
+                <ol class="mb-0">
+                    <li class="mb-2">Search and select the objects you want to modify</li>
+                    <li class="mb-2">Choose the attribute to change from the dropdown</li>
+                    <li class="mb-2">Enter the new value, or check "Clear" to remove it</li>
+                    <li>Click Apply to modify all selected objects at once</li>
+                </ol>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="card-header"><i class="fas fa-exclamation-triangle me-1 text-warning"></i>Caution</div>
+            <div class="card-body small">
+                <p class="mb-2">This tool modifies attributes in bulk. Double-check your selection before applying.</p>
+                <p class="mb-0">Only commonly-used safe attributes are available. For sensitive attributes, use the Attribute Editor on individual objects.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const selectedDns = new Map();
+
+function searchObjects() {
+    const q = document.getElementById('searchInput').value.trim();
+    const type = document.getElementById('objType').value;
+    if (q.length < 2) return;
+
+    fetch(`{{ url_for('bulk_attr.api_search') }}?q=${encodeURIComponent(q)}&type=${type}`)
+        .then(r => r.json())
+        .then(results => {
+            const div = document.getElementById('searchResults');
+            div.innerHTML = '';
+            if (results.length === 0) {
+                div.innerHTML = '<span class="text-muted small">No results</span>';
+            }
+            results.forEach(obj => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-outline-primary me-1 mb-1';
+                btn.innerHTML = `<i class="fas fa-plus me-1"></i>${obj.sam}`;
+                btn.title = obj.dn;
+                btn.onclick = function() { addObject(obj); };
+                if (selectedDns.has(obj.dn)) btn.disabled = true;
+                div.appendChild(btn);
+            });
+            div.style.display = 'block';
+        });
+}
+
+function addObject(obj) {
+    if (selectedDns.has(obj.dn)) return;
+    selectedDns.set(obj.dn, obj);
+    renderSelected();
+}
+
+function removeObject(dn) {
+    selectedDns.delete(dn);
+    renderSelected();
+}
+
+function renderSelected() {
+    const container = document.getElementById('selectedObjects');
+    container.innerHTML = '';
+    // Remove old hidden inputs
+    document.querySelectorAll('.dn-hidden').forEach(el => el.remove());
+
+    selectedDns.forEach((obj, dn) => {
+        // Badge
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-primary me-1 mb-1';
+        badge.style.cursor = 'pointer';
+        badge.innerHTML = `${obj.sam} <i class="fas fa-times ms-1"></i>`;
+        badge.title = 'Click to remove';
+        badge.onclick = function() { removeObject(dn); };
+        container.appendChild(badge);
+
+        // Hidden input
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'dns';
+        input.value = dn;
+        input.className = 'dn-hidden';
+        document.getElementById('bulkForm').appendChild(input);
+    });
+
+    document.getElementById('selectedCount').textContent = selectedDns.size;
+}
+
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); searchObjects(); }
+});
+</script>
+{% endblock %}

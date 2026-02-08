@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Import/Export{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.list_users') }}" class="text-decoration-none text-muted">Users</a>
+<span class="mx-2">/</span>
+<span>Bulk Import/Export</span>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Import -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-import me-2"></i>Bulk Import</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Upload a CSV file to create multiple users at once.</p>
+                <div class="alert alert-info">
+                    <strong>Required columns:</strong> fname, lname, username, password<br>
+                    <strong>Optional columns:</strong> email, department, title
+                </div>
+                <form method="POST" action="{{ url_for('users.bulk_import_route') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" data-confirm="Import all users from this CSV file?">
+                        <i class="fas fa-upload me-1"></i>Import Users
+                    </button>
+                </form>
+
+                <!-- Sample CSV -->
+                <div class="mt-3">
+                    <small class="text-muted">Sample CSV format:</small>
+                    <pre class="bg-dark text-light p-3 rounded mt-1" style="font-size: 0.8rem;">fname,lname,username,password,email,department,title
+John,Doe,jdoe,P@ssw0rd123,jdoe@{{ domain_display }},IT,Admin
+Jane,Smith,jsmith,P@ssw0rd456,jsmith@{{ domain_display }},HR,Manager</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-file-export me-2"></i>Bulk Export</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Download all AD users as a CSV file.</p>
+                <p>The export includes: username, first name, last name, display name, email, phone, department, title, status, and creation date.</p>
+                <a href="{{ url_for('users.bulk_export') }}" class="btn btn-success w-100">
+                    <i class="fas fa-download me-1"></i>Export All Users
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Results -->
+{% if results is defined and results %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Import Results</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Status</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr class="{{ 'table-success' if result.success else 'table-danger' }}">
+                    <td>{{ result.username }}</td>
+                    <td>
+                        {% if result.success %}
+                        <span class="badge bg-success">Success</span>
+                        {% else %}
+                        <span class="badge bg-danger">Failed</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ result.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

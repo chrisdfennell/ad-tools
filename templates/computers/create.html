@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Create Computer{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('computers.list_computers') }}" class="text-decoration-none text-muted">Computers</a>
+<span class="mx-2">/</span>
+<span>Create</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-desktop me-2"></i>Create Computer Account</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Computer Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required
+                               placeholder="e.g. WORKSTATION01" pattern="[a-zA-Z0-9\-]{1,15}"
+                               title="Max 15 characters, alphanumeric and hyphens only">
+                        <small class="text-muted">NetBIOS name, max 15 characters.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Target OU <span class="text-danger">*</span></label>
+                        <select name="ou_dn" class="form-select" required>
+                            <option value="">Select OU...</option>
+                            {% for ou in ous %}
+                            <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="description" class="form-control" placeholder="Optional description">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill py-2 fw-bold">
+                            <i class="fas fa-plus me-2"></i>Create Computer
+                        </button>
+                        <a href="{{ url_for('computers.list_computers') }}" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

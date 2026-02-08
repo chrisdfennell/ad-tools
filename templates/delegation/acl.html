@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}ACL: {{ obj.name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('delegation.index') }}" class="text-decoration-none text-muted">Delegations</a>
+<span class="mx-2">/</span>
+<span>ACL</span>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="mb-1"><i class="fas fa-lock me-2"></i>Access Control List</h4>
+    <small class="text-muted">{{ obj.dn }}</small>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-list me-1"></i>ACEs <span class="badge bg-secondary">{{ obj.aces|length }}</span>
+        </span>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="toggleInherited()">
+                <i class="fas fa-eye-slash me-1"></i>Toggle Inherited
+            </button>
+            <input type="text" id="aceFilter" class="form-control form-control-sm" style="width:200px" placeholder="Filter...">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0" id="aceTable">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Principal</th>
+                    <th>Rights</th>
+                    <th>Inherited</th>
+                    <th>Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ace in obj.aces %}
+                <tr class="ace-row {% if ace.inherited %}inherited-ace{% endif %} {% if ace.dangerous %}table-warning{% endif %}">
+                    <td>
+                        {% if 'Deny' in ace.type %}
+                        <span class="badge bg-danger">{{ ace.type }}</span>
+                        {% else %}
+                        <span class="badge bg-success">{{ ace.type }}</span>
+                        {% endif %}
+                    </td>
+                    <td><code>{{ ace.principal }}</code></td>
+                    <td><small>{{ ace.rights }}</small></td>
+                    <td>
+                        {% if ace.inherited %}
+                        <span class="text-muted"><i class="fas fa-arrow-down me-1"></i>Yes</span>
+                        {% else %}
+                        <span class="text-primary fw-bold"><i class="fas fa-hand-point-right me-1"></i>Explicit</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ace.dangerous %}
+                        <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var showInherited = true;
+function toggleInherited() {
+    showInherited = !showInherited;
+    document.querySelectorAll('.inherited-ace').forEach(function(row) {
+        row.style.display = showInherited ? '' : 'none';
+    });
+}
+document.getElementById('aceFilter').addEventListener('input', function() {
+    var filter = this.value.toLowerCase();
+    document.querySelectorAll('.ace-row').forEach(function(row) {
+        var text = row.textContent.toLowerCase();
+        row.style.display = text.indexOf(filter) >= 0 ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

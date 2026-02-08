@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_name }}{% endblock %} - {{ domain_display }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-shield-halved me-2"></i>
+            <span class="sidebar-title">{{ app_name }}</span>
+        </div>
+        <div class="sidebar-domain">{{ domain_display }}</div>
+        {% if user_role %}
+        <div class="sidebar-domain" style="margin-top:-8px;">
+            <span class="badge bg-{{ 'danger' if user_role == 'admin' else 'warning text-dark' if user_role == 'helpdesk' else 'secondary' }} badge-sm">{{ user_role }}</span>
+        </div>
+        {% endif %}
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('activity.index') }}" class="{% if request.endpoint and request.endpoint.startswith('activity.') %}active{% endif %}">
+                    <i class="fas fa-heartbeat"></i> Activity Monitor
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('search.index') }}" class="{% if request.endpoint and request.endpoint.startswith('search.') %}active{% endif %}">
+                    <i class="fas fa-search"></i> Global Search
+                </a>
+            </li>
+            <li class="nav-section">User Management</li>
+            <li>
+                <a href="{{ url_for('users.list_users') }}" class="{% if request.endpoint and request.endpoint.startswith('users.list') %}active{% endif %}">
+                    <i class="fas fa-users"></i> All Users
+                </a>
+            </li>
+            {% if has_permission('users.create') %}
+            <li>
+                <a href="{{ url_for('users.create') }}" class="{% if request.endpoint == 'users.create' %}active{% endif %}">
+                    <i class="fas fa-user-plus"></i> Create User
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('users.bulk') %}
+            <li>
+                <a href="{{ url_for('users.bulk') }}" class="{% if request.endpoint and request.endpoint.startswith('users.bulk') %}active{% endif %}">
+                    <i class="fas fa-file-csv"></i> Bulk Import/Export
+                </a>
+            </li>
+            {% endif %}
+            <li>
+                <a href="{{ url_for('users.compare') }}" class="{% if request.endpoint == 'users.compare' %}active{% endif %}">
+                    <i class="fas fa-columns"></i> Compare Users
+                </a>
+            </li>
+            {% if has_permission('workflows.onboard') %}
+            <li class="nav-section">Workflows</li>
+            <li>
+                <a href="{{ url_for('workflows.onboard') }}" class="{% if request.endpoint == 'workflows.onboard' %}active{% endif %}">
+                    <i class="fas fa-user-plus"></i> Onboarding
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('workflows.offboard') }}" class="{% if request.endpoint == 'workflows.offboard' %}active{% endif %}">
+                    <i class="fas fa-user-slash"></i> Offboarding
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('dynamic_groups.view') %}
+            <li>
+                <a href="{{ url_for('dynamic_groups.index') }}" class="{% if request.endpoint and request.endpoint.startswith('dynamic_groups.') %}active{% endif %}">
+                    <i class="fas fa-magic"></i> Dynamic Groups
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-section">Group Management</li>
+            <li>
+                <a href="{{ url_for('groups.list_groups') }}" class="{% if request.endpoint and request.endpoint.startswith('groups.list') %}active{% endif %}">
+                    <i class="fas fa-layer-group"></i> All Groups
+                </a>
+            </li>
+            {% if has_permission('groups.create') %}
+            <li>
+                <a href="{{ url_for('groups.create') }}" class="{% if request.endpoint == 'groups.create' %}active{% endif %}">
+                    <i class="fas fa-plus-circle"></i> Create Group
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('group_nesting.view') %}
+            <li>
+                <a href="{{ url_for('group_nesting.index') }}" class="{% if request.endpoint and request.endpoint.startswith('group_nesting.') %}active{% endif %}">
+                    <i class="fas fa-project-diagram"></i> Group Nesting
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('bulk_groups.view') %}
+            <li>
+                <a href="{{ url_for('bulk_groups.index') }}" class="{% if request.endpoint and request.endpoint.startswith('bulk_groups.') %}active{% endif %}">
+                    <i class="fas fa-users-cog"></i> Bulk Membership
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-section">Directory</li>
+            <li>
+                <a href="{{ url_for('ous.tree') }}" class="{% if request.endpoint and request.endpoint.startswith('ous.') %}active{% endif %}">
+                    <i class="fas fa-sitemap"></i> OU Browser
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('computers.list_computers') }}" class="{% if request.endpoint and request.endpoint.startswith('computers.') %}active{% endif %}">
+                    <i class="fas fa-desktop"></i> Computers
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('orgchart.index') }}" class="{% if request.endpoint and request.endpoint.startswith('orgchart.') %}active{% endif %}">
+                    <i class="fas fa-sitemap fa-rotate-180"></i> Org Chart
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dns.zones') }}" class="{% if request.endpoint and request.endpoint.startswith('dns.') %}active{% endif %}">
+                    <i class="fas fa-globe"></i> DNS Records
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('gpo.list_gpos') }}" class="{% if request.endpoint and request.endpoint.startswith('gpo.') %}active{% endif %}">
+                    <i class="fas fa-scroll"></i> Group Policy
+                </a>
+            </li>
+            {% if has_permission('lockout.view') %}
+            <li>
+                <a href="{{ url_for('lockout.index') }}" class="{% if request.endpoint and request.endpoint.startswith('lockout.') %}active{% endif %}">
+                    <i class="fas fa-user-lock"></i> Lockout Insight
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('sites.view') %}
+            <li>
+                <a href="{{ url_for('sites.index') }}" class="{% if request.endpoint and request.endpoint.startswith('sites.') %}active{% endif %}">
+                    <i class="fas fa-network-wired"></i> Sites & Subnets
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('replication.view') %}
+            <li>
+                <a href="{{ url_for('replication.index') }}" class="{% if request.endpoint and request.endpoint.startswith('replication.') %}active{% endif %}">
+                    <i class="fas fa-sync-alt"></i> Replication
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-section">Security</li>
+            <li>
+                <a href="{{ url_for('service_accounts.index') }}" class="{% if request.endpoint and request.endpoint.startswith('service_accounts.') %}active{% endif %}">
+                    <i class="fas fa-robot"></i> Service Accounts
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('delegation.index') }}" class="{% if request.endpoint and request.endpoint.startswith('delegation.') %}active{% endif %}">
+                    <i class="fas fa-shield-alt"></i> Delegations
+                </a>
+            </li>
+            {% if has_permission('laps.view') %}
+            <li>
+                <a href="{{ url_for('laps.index') }}" class="{% if request.endpoint and request.endpoint.startswith('laps.') %}active{% endif %}">
+                    <i class="fas fa-key"></i> LAPS Passwords
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('bitlocker.view') %}
+            <li>
+                <a href="{{ url_for('bitlocker.index') }}" class="{% if request.endpoint and request.endpoint.startswith('bitlocker.') %}active{% endif %}">
+                    <i class="fas fa-lock"></i> BitLocker Keys
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('fgpp.view') %}
+            <li>
+                <a href="{{ url_for('fgpp.index') }}" class="{% if request.endpoint and request.endpoint.startswith('fgpp.') %}active{% endif %}">
+                    <i class="fas fa-sliders-h"></i> Password Policies
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('gmsa.view') %}
+            <li>
+                <a href="{{ url_for('gmsa.index') }}" class="{% if request.endpoint and request.endpoint.startswith('gmsa.') %}active{% endif %}">
+                    <i class="fas fa-cogs"></i> gMSA Accounts
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('spn.view') %}
+            <li>
+                <a href="{{ url_for('spn.index') }}" class="{% if request.endpoint and request.endpoint.startswith('spn.') %}active{% endif %}">
+                    <i class="fas fa-tags"></i> SPN Management
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('token_size.view') %}
+            <li>
+                <a href="{{ url_for('token_size.index') }}" class="{% if request.endpoint and request.endpoint.startswith('token_size.') %}active{% endif %}">
+                    <i class="fas fa-ticket-alt"></i> Token Size
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('acl.view') %}
+            <li>
+                <a href="{{ url_for('acl.index') }}" class="{% if request.endpoint and request.endpoint.startswith('acl.') %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i> Permissions (ACL)
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-section">Reports</li>
+            <li>
+                <a href="{{ url_for('reports.password_expiry') }}" class="{% if request.endpoint == 'reports.password_expiry' %}active{% endif %}">
+                    <i class="fas fa-hourglass-half"></i> Password Expiry
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('reports.stale_objects') }}" class="{% if request.endpoint == 'reports.stale_objects' %}active{% endif %}">
+                    <i class="fas fa-clock"></i> Stale Objects
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('reports.privileged') }}" class="{% if request.endpoint == 'reports.privileged' %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i> Privileged Accounts
+                </a>
+            </li>
+            <li class="nav-section">System</li>
+            {% if has_permission('ad_health.view') %}
+            <li>
+                <a href="{{ url_for('ad_health.index') }}" class="{% if request.endpoint and request.endpoint.startswith('ad_health.') %}active{% endif %}">
+                    <i class="fas fa-server"></i> AD Health
+                </a>
+            </li>
+            {% endif %}
+            <li>
+                <a href="{{ url_for('recycle.list_deleted') }}" class="{% if request.endpoint and request.endpoint.startswith('recycle.') %}active{% endif %}">
+                    <i class="fas fa-trash-restore"></i> Recycle Bin
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('audit.log') }}" class="{% if request.endpoint and request.endpoint.startswith('audit.') %}active{% endif %}">
+                    <i class="fas fa-clipboard-list"></i> Audit Log
+                </a>
+            </li>
+            {% if has_permission('scheduled_reports.view') %}
+            <li>
+                <a href="{{ url_for('scheduled_reports.index') }}" class="{% if request.endpoint and request.endpoint.startswith('scheduled_reports.') %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i> Scheduled Reports
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('attributes.view') %}
+            <li>
+                <a href="{{ url_for('attributes.index') }}" class="{% if request.endpoint and request.endpoint.startswith('attributes.') %}active{% endif %}">
+                    <i class="fas fa-database"></i> Attribute Editor
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('ldap_query.view') %}
+            <li>
+                <a href="{{ url_for('ldap_query.index') }}" class="{% if request.endpoint and request.endpoint.startswith('ldap_query.') %}active{% endif %}">
+                    <i class="fas fa-terminal"></i> LDAP Query
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('schema.view') %}
+            <li>
+                <a href="{{ url_for('schema.index') }}" class="{% if request.endpoint and request.endpoint.startswith('schema.') %}active{% endif %}">
+                    <i class="fas fa-cubes"></i> Schema Browser
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('bulk_attr.edit') %}
+            <li>
+                <a href="{{ url_for('bulk_attr.index') }}" class="{% if request.endpoint and request.endpoint.startswith('bulk_attr.') %}active{% endif %}">
+                    <i class="fas fa-edit"></i> Bulk Attribute Edit
+                </a>
+            </li>
+            {% endif %}
+            {% if has_permission('settings.manage') %}
+            <li>
+                <a href="{{ url_for('settings.index') }}" class="{% if request.endpoint and request.endpoint.startswith('settings.') %}active{% endif %}">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="main-content" class="main-content">
+        <!-- Top Bar -->
+        <nav class="topbar">
+            <button class="btn btn-link sidebar-toggle d-md-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="topbar-breadcrumb">
+                {% block breadcrumb %}{% endblock %}
+            </div>
+            <form action="{{ url_for('search.index') }}" method="GET" class="d-none d-md-flex me-3" style="width:250px">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="q" class="form-control" placeholder="Search AD...">
+                    <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
+            <div class="topbar-actions d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleTheme()" title="Toggle dark/light theme">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                {% if logged_in_user %}
+                <span class="text-muted small"><i class="fas fa-user me-1"></i>{{ logged_in_user }}</span>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div class="content-wrapper">
+            {% include 'partials/flash_messages.html' %}
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    {% include 'partials/confirm_modal.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

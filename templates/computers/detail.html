@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}{{ computer.cn }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('computers.list_computers') }}" class="text-decoration-none text-muted">Computers</a>
+<span class="mx-2">/</span>
+<span>{{ computer.cn }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="fas fa-desktop me-2"></i>{{ computer.cn }}</h4>
+        <span class="text-muted">{{ computer.dns_name }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if computer.status == 'enabled' %}
+        <form method="POST" action="{{ url_for('computers.disable', cn=computer.cn) }}">
+            <button class="btn btn-outline-warning" data-confirm="Disable computer '{{ computer.cn }}'?">
+                <i class="fas fa-power-off me-1"></i>Disable
+            </button>
+        </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('computers.enable', cn=computer.cn) }}">
+            <button class="btn btn-outline-success">
+                <i class="fas fa-power-off me-1"></i>Enable
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-4">
+                    {% if computer.status == 'enabled' %}
+                    <span class="badge badge-enabled fs-6"><i class="fas fa-check-circle me-1"></i>Enabled</span>
+                    {% else %}
+                    <span class="badge badge-disabled fs-6"><i class="fas fa-times-circle me-1"></i>Disabled</span>
+                    {% endif %}
+                </div>
+
+                <div class="detail-section">
+                    <h6>System Information</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Computer Name</div>
+                        <div class="detail-value">{{ computer.cn }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">SAM Name</div>
+                        <div class="detail-value"><code>{{ computer.sam }}</code></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">DNS Host Name</div>
+                        <div class="detail-value">{{ computer.dns_name or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Operating System</div>
+                        <div class="detail-value">{{ computer.os or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">OS Version</div>
+                        <div class="detail-value">{{ computer.os_version or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Description</div>
+                        <div class="detail-value">{{ computer.description or '—' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Managed By</div>
+                        <div class="detail-value">{{ computer.managed_by or '—' }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h6>Account</h6>
+                    <div class="detail-row">
+                        <div class="detail-label">Distinguished Name</div>
+                        <div class="detail-value"><small><code>{{ computer.dn }}</code></small></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Last Logon</div>
+                        <div class="detail-value">{{ computer.last_logon }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Created</div>
+                        <div class="detail-value">{{ computer.when_created }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Group Membership</h6>
+                <span class="badge bg-secondary">{{ groups|length }}</span>
+            </div>
+            <div class="card-body">
+                <!-- Add to Group -->
+                <div class="mb-3">
+                    <form method="POST" action="{{ url_for('computers.add_to_group', cn=computer.cn) }}" class="d-flex gap-2">
+                        <div class="flex-grow-1 position-relative">
+                            <input type="text" id="groupSearch" class="form-control form-control-sm" placeholder="Search for a group..." autocomplete="off">
+                            <input type="hidden" name="group_dn" id="groupDn">
+                            <div id="groupResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary" id="addGroupBtn" disabled>
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body p-0 pt-0">
+                {% if groups %}
+                <ul class="list-group list-group-flush">
+                    {% for group in groups %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-layer-group me-2 text-muted"></i>
+                            {{ group.cn }}
+                        </span>
+                        <form method="POST" action="{{ url_for('computers.remove_from_group', cn=computer.cn) }}" class="d-inline">
+                            <input type="hidden" name="group_dn" value="{{ group.dn }}">
+                            <button class="btn btn-sm btn-outline-danger" data-confirm="Remove '{{ computer.cn }}' from group '{{ group.cn }}'?">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-3 text-muted">No group memberships.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Move to OU -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-arrows-alt me-2"></i>Move to OU</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('computers.move', cn=computer.cn) }}">
+                    <div class="mb-3">
+                        <select name="target_ou" class="form-select form-select-sm" required>
+                            <option value="">Select target OU...</option>
+                            {% for ou in ous %}
+                            <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-outline-secondary w-100" data-confirm="Move computer '{{ computer.cn }}' to a different OU?">
+                        <i class="fas fa-arrows-alt me-1"></i>Move Computer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const groupSearch = document.getElementById('groupSearch');
+    const groupResults = document.getElementById('groupResults');
+    const groupDnInput = document.getElementById('groupDn');
+    const addGroupBtn = document.getElementById('addGroupBtn');
+    let groupTimeout;
+
+    groupSearch.addEventListener('input', function () {
+        clearTimeout(groupTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            groupResults.style.display = 'none';
+            return;
+        }
+        groupTimeout = setTimeout(function () {
+            fetch('{{ url_for("computers.search_groups_api") }}?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(groups => {
+                    groupResults.innerHTML = '';
+                    if (groups.length === 0) {
+                        groupResults.innerHTML = '<div class="list-group-item text-muted">No groups found</div>';
+                    }
+                    groups.forEach(function (g) {
+                        const item = document.createElement('a');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.href = '#';
+                        item.textContent = g.cn + ' (' + g.type_label + ')';
+                        item.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            groupDnInput.value = g.dn;
+                            groupSearch.value = g.cn;
+                            groupResults.style.display = 'none';
+                            addGroupBtn.disabled = false;
+                        });
+                        groupResults.appendChild(item);
+                    });
+                    groupResults.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!groupResults.contains(e.target) && e.target !== groupSearch) {
+            groupResults.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}LDAP Query Builder{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>LDAP Query Builder</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-terminal me-2"></i>LDAP Query Builder</h4>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="fas fa-filter me-1"></i>Query</div>
+            <div class="card-body">
+                <form method="POST" id="queryForm">
+                    <div class="mb-3">
+                        <label class="form-label">Search Base <small class="text-muted">(leave empty for domain root)</small></label>
+                        <input type="text" name="search_base" class="form-control font-monospace"
+                               value="{{ query.search_base }}" placeholder="DC=fennellfamily,DC=org">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">LDAP Filter <span class="text-danger">*</span></label>
+                        <textarea name="filter" class="form-control font-monospace" rows="3"
+                                  required placeholder="(&(objectClass=user)(objectCategory=person))">{{ query.filter }}</textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Attributes <small class="text-muted">(comma-separated)</small></label>
+                            <input type="text" name="attributes" class="form-control font-monospace"
+                                   value="{{ query.attributes }}" placeholder="cn,sAMAccountName,mail">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Scope</label>
+                            <select name="scope" class="form-select">
+                                <option value="subtree" {% if query.scope == 'subtree' %}selected{% endif %}>Subtree</option>
+                                <option value="onelevel" {% if query.scope == 'onelevel' %}selected{% endif %}>One Level</option>
+                                <option value="base" {% if query.scope == 'base' %}selected{% endif %}>Base</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fas fa-play me-1"></i>Execute Query
+                        </button>
+                        {% if results %}
+                        <button type="submit" formaction="{{ url_for('ldap_query.export_csv') }}" class="btn btn-outline-success">
+                            <i class="fas fa-download me-1"></i>Export CSV
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if results %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-table me-1"></i>Results</span>
+                <span class="badge bg-secondary">{{ results.count }} objects</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>DN</th>
+                                {% for attr in results.attributes %}
+                                <th>{{ attr }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in results.results %}
+                            <tr>
+                                <td><small class="text-break">{{ row.dn }}</small></td>
+                                {% for attr in results.attributes %}
+                                <td class="text-break">{{ row.get(attr, '') }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-bookmark me-1"></i>Saved Queries</div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for key, sq in saved_queries.items() %}
+                    <a href="{{ url_for('ldap_query.index', saved=key) }}" class="list-group-item list-group-item-action">
+                        <strong>{{ sq.name }}</strong><br>
+                        <small class="text-muted font-monospace">{{ sq.filter[:60] }}{% if sq.filter|length > 60 %}...{% endif %}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><i class="fas fa-info-circle me-1"></i>Filter Syntax Help</div>
+            <div class="card-body small">
+                <p><strong>Basic:</strong></p>
+                <ul class="mb-2">
+                    <li><code>(attribute=value)</code> - Equality</li>
+                    <li><code>(attribute=*value*)</code> - Contains</li>
+                    <li><code>(attribute>=value)</code> - Greater or equal</li>
+                    <li><code>(!(attribute=value))</code> - NOT</li>
+                </ul>
+                <p><strong>Compound:</strong></p>
+                <ul class="mb-2">
+                    <li><code>(&(filter1)(filter2))</code> - AND</li>
+                    <li><code>(|(filter1)(filter2))</code> - OR</li>
+                </ul>
+                <p><strong>Bitwise (UAC):</strong></p>
+                <ul class="mb-0">
+                    <li><code>1.2.840.113556.1.4.803</code> - AND match</li>
+                    <li><code>1.2.840.113556.1.4.804</code> - OR match</li>
+                    <li><code>1.2.840.113556.1.4.1941</code> - Nested member</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

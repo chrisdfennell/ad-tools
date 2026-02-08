@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Settings</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-cog me-2"></i>Application Settings</h4>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Settings saved here override environment variables and take effect immediately without restarting the container.
+    Leave a field blank to use the environment variable / default value.
+</div>
+
+<form method="POST">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            {% for group_name, fields in setting_groups.items() %}
+            <div class="card mb-4">
+                <div class="card-header"><strong>{{ group_name }}</strong></div>
+                <div class="card-body">
+                    {% for field in fields %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        <input type="{{ field.type }}" name="{{ field.key }}" class="form-control"
+                               value="{{ field.current }}" placeholder="{{ field.default }}">
+                        <small class="text-muted">Key: <code>{{ field.key }}</code></small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold" data-confirm="Save all settings? Changes take effect immediately.">
+                <i class="fas fa-save me-2"></i>Save Settings
+            </button>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-exclamation-triangle me-1 text-warning"></i>Important</div>
+                <div class="card-body small">
+                    <p class="mb-2"><strong>AD Connection settings</strong> (server IP, domain, credentials) cannot be changed here for security reasons. They must be set via environment variables.</p>
+                    <p class="mb-2"><strong>Settings hierarchy:</strong> Saved settings > Environment variables > Defaults</p>
+                    <p class="mb-0"><strong>SMTP password</strong> is not stored here. Set it via the <code>SMTP_PASSWORD</code> environment variable.</p>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header"><i class="fas fa-server me-1"></i>Current Environment</div>
+                <div class="card-body small">
+                    <div class="mb-2"><strong>AD Server:</strong> <code>{{ config.get('AD_SERVER_IP', 'Not set') }}</code></div>
+                    <div class="mb-2"><strong>Domain:</strong> <code>{{ config.get('AD_DOMAIN', '') }}.{{ config.get('AD_SUFFIX', '') }}</code></div>
+                    <div class="mb-2"><strong>Base DN:</strong> <code>{{ config.get('BASE_DN', 'Not set') }}</code></div>
+                    <div class="mb-0"><strong>Secret Key:</strong> <code>{{ '****' if config.get('SECRET_KEY') else 'Not set' }}</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

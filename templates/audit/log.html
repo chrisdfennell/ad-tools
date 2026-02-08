@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Audit Log</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Audit Log <span class="badge bg-secondary">{{ total }}</span></h4>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Filter by Action</label>
+                <input type="text" name="action" class="form-control" placeholder="e.g. create_user, delete..." value="{{ action_filter }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Filter by User</label>
+                <input type="text" name="user" class="form-control" placeholder="Username..." value="{{ user_filter }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i>Filter</button>
+                <a href="{{ url_for('audit.log') }}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if entries %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>Details</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in entries %}
+                    <tr>
+                        <td><small>{{ e.timestamp }}</small></td>
+                        <td><code>{{ e.user }}</code></td>
+                        <td><span class="badge bg-primary">{{ e.action }}</span></td>
+                        <td>{{ e.target }}</td>
+                        <td><small class="text-muted">{{ e.details[:100] }}{% if e.details|length > 100 %}...{% endif %}</small></td>
+                        <td>
+                            {% if e.result == 'success' %}
+                            <span class="badge badge-enabled">Success</span>
+                            {% else %}
+                            <span class="badge badge-disabled">Failed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">No audit log entries found.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page={{ page-1 }}&action={{ action_filter }}&user={{ user_filter }}">Previous</a></li>
+        {% endif %}
+        {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 2 and p <= page + 2) %}
+        <li class="page-item"><a class="page-link" href="?page={{ p }}&action={{ action_filter }}&user={{ user_filter }}">{{ p }}</a></li>
+        {% elif p == 4 or p == total_pages - 3 %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %}
+        {% endfor %}
+        {% if page < total_pages %}
+        <li class="page-item"><a class="page-link" href="?page={{ page+1 }}&action={{ action_filter }}&user={{ user_filter }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

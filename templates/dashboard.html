@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<i class="fas fa-tachometer-alt me-2"></i> Dashboard
+{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.active_users }}</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.disabled_users }}</div>
+            <div class="stat-label">Disabled Users</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-lock"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.locked_users }}</div>
+            <div class="stat-label">Locked Out</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total_groups }}</div>
+            <div class="stat-label">Groups</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                    <i class="fas fa-desktop"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total_computers }}</div>
+            <div class="stat-label">Computers</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0"><i class="fas fa-chart-pie me-2 text-primary"></i>User Status</h6></div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="userStatusChart" style="max-height:220px"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-warning"></i>Password Expiry</h6></div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="expiryChart" style="max-height:220px"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-info"></i>Top Groups by Members</h6></div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="topGroupsChart" style="max-height:220px"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Locked Accounts Alert -->
+{% if stats.locked_user_list %}
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning bg-opacity-10">
+        <h5 class="mb-0 text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Locked Accounts ({{ stats.locked_users }})</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Username</th>
+                    <th>Locked Since</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in stats.locked_user_list %}
+                <tr>
+                    <td>{{ user.cn }}</td>
+                    <td><code>{{ user.sam }}</code></td>
+                    <td>{{ user.lockout_time }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('users.unlock', sam=user.sam) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-unlock me-1"></i>Unlock
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <!-- Recently Created -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-plus me-2 text-success"></i>Recently Created Users</h5>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_users %}
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in stats.recent_users[:10] %}
+                        <tr>
+                            <td>{{ user.cn }}</td>
+                            <td>
+                                <a href="{{ url_for('users.detail', sam=user.sam) }}">{{ user.sam }}</a>
+                            </td>
+                            <td>{{ user.when_created }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted mb-0">No users created in the last 7 days.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Modified -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-pen me-2 text-info"></i>Recently Modified Users</h5>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_modified %}
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Modified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in stats.recent_modified %}
+                        <tr>
+                            <td>{{ user.cn }}</td>
+                            <td>
+                                <a href="{{ url_for('users.detail', sam=user.sam) }}">{{ user.sam }}</a>
+                            </td>
+                            <td>{{ user.when_changed }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted mb-0">No recent modifications.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-bolt me-2 text-primary"></i>Quick Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <a href="{{ url_for('users.create') }}" class="btn btn-primary w-100 py-3">
+                    <i class="fas fa-user-plus d-block mb-1 fs-4"></i>Create User
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ url_for('groups.create') }}" class="btn btn-success w-100 py-3">
+                    <i class="fas fa-plus-circle d-block mb-1 fs-4"></i>Create Group
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ url_for('users.bulk') }}" class="btn btn-info w-100 py-3 text-white">
+                    <i class="fas fa-file-csv d-block mb-1 fs-4"></i>Bulk Import
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ url_for('ous.tree') }}" class="btn btn-secondary w-100 py-3">
+                    <i class="fas fa-sitemap d-block mb-1 fs-4"></i>Browse OUs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+const textColor = isDark ? '#e1e3e6' : '#212529';
+const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+Chart.defaults.color = textColor;
+
+// User Status Donut
+new Chart(document.getElementById('userStatusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Active', 'Disabled', 'Locked'],
+        datasets: [{
+            data: [{{ stats.active_users }}, {{ stats.disabled_users }}, {{ stats.locked_users }}],
+            backgroundColor: ['#198754', '#dc3545', '#fd7e14'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 15 } }
+        },
+        cutout: '60%',
+    }
+});
+
+// Password Expiry Bar
+{% if stats.expiry_buckets %}
+new Chart(document.getElementById('expiryChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ stats.expiry_buckets.keys()|list|tojson }},
+        datasets: [{
+            label: 'Users',
+            data: {{ stats.expiry_buckets.values()|list|tojson }},
+            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#198754', '#0d6efd'],
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: gridColor } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+{% endif %}
+
+// Top Groups Horizontal Bar
+{% if stats.top_groups %}
+new Chart(document.getElementById('topGroupsChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ stats.top_groups|map(attribute='cn')|list|tojson }},
+        datasets: [{
+            label: 'Members',
+            data: {{ stats.top_groups|map(attribute='count')|list|tojson }},
+            backgroundColor: '#0dcaf0',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { beginAtZero: true, grid: { color: gridColor } },
+            y: { grid: { display: false } }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Org Chart{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Org Chart</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Organization Chart</h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" onclick="expandAll()">
+            <i class="fas fa-expand me-1"></i>Expand All
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="collapseAll()">
+            <i class="fas fa-compress me-1"></i>Collapse All
+        </button>
+    </div>
+</div>
+
+{% if tree %}
+<div class="card">
+    <div class="card-body">
+        <div id="orgTree">
+            {{ render_tree(tree) }}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-5">
+        <i class="fas fa-project-diagram fa-3x mb-3"></i>
+        <p>No manager hierarchy found. Set the <code>manager</code> attribute on user accounts to build the org chart.</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% macro render_tree(nodes) %}
+<ul class="org-tree-list">
+    {% for node in nodes %}
+    <li class="org-node">
+        <div class="org-card d-flex align-items-center gap-2 p-2 rounded mb-1" data-sam="{{ node.sam }}">
+            {% if node.children %}
+            <span class="org-toggle" onclick="toggleNode(this)">
+                <i class="fas fa-caret-down"></i>
+            </span>
+            {% else %}
+            <span class="org-toggle-spacer"></span>
+            {% endif %}
+            <i class="fas fa-user-circle text-primary"></i>
+            <div class="flex-grow-1">
+                <a href="{{ url_for('users.detail', sam=node.sam) }}" class="fw-bold text-decoration-none">
+                    {{ node.display_name }}
+                </a>
+                <small class="text-muted ms-1">({{ node.sam }})</small>
+                {% if node.title %}
+                <br><small class="text-muted">{{ node.title }}</small>
+                {% endif %}
+                {% if node.department %}
+                <span class="badge bg-secondary ms-1" style="font-size:0.65rem">{{ node.department }}</span>
+                {% endif %}
+            </div>
+            {% if node.children %}
+            <span class="badge bg-primary rounded-pill">{{ node.children|length }}</span>
+            {% endif %}
+        </div>
+        {% if node.children %}
+        <div class="org-children">
+            {{ render_tree(node.children) }}
+        </div>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endmacro %}
+
+{% block scripts %}
+<style>
+    .org-tree-list {
+        list-style: none;
+        padding-left: 24px;
+        margin: 0;
+    }
+    #orgTree > .org-tree-list {
+        padding-left: 0;
+    }
+    .org-card {
+        cursor: default;
+        transition: background 0.2s;
+        border: 1px solid transparent;
+    }
+    .org-card:hover {
+        background: rgba(13, 110, 253, 0.05);
+        border-color: var(--border-color);
+    }
+    .org-toggle {
+        cursor: pointer;
+        width: 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    .org-toggle:hover {
+        color: var(--text-primary);
+    }
+    .org-toggle-spacer {
+        width: 20px;
+        display: inline-block;
+    }
+    .org-children {
+        border-left: 2px solid var(--border-color);
+        margin-left: 10px;
+    }
+    .org-node.collapsed > .org-children {
+        display: none;
+    }
+    .org-node.collapsed > .org-card .org-toggle i {
+        transform: rotate(-90deg);
+    }
+</style>
+<script>
+function toggleNode(el) {
+    var li = el.closest('.org-node');
+    li.classList.toggle('collapsed');
+}
+
+function expandAll() {
+    document.querySelectorAll('.org-node.collapsed').forEach(function(n) {
+        n.classList.remove('collapsed');
+    });
+}
+
+function collapseAll() {
+    document.querySelectorAll('.org-node').forEach(function(n) {
+        if (n.querySelector('.org-children')) {
+            n.classList.add('collapsed');
+        }
+    });
+}
+</script>
+{% endblock %}

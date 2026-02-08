@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Group Policy Objects{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Group Policy</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-scroll me-2"></i>Group Policy Objects <span class="badge bg-secondary">{{ gpos|length }}</span></h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if gpos %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Links</th>
+                    <th>Version (User/Computer)</th>
+                    <th>Modified</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gpo in gpos %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('gpo.detail', dn=gpo.dn) }}" class="fw-bold text-decoration-none">
+                            <i class="fas fa-scroll me-1 text-muted"></i>{{ gpo.name }}
+                        </a>
+                        <br><small class="text-muted">{{ gpo.guid }}</small>
+                    </td>
+                    <td>
+                        {% if gpo.flags == 0 %}
+                        <span class="badge bg-success">Enabled</span>
+                        {% elif gpo.flags == 3 %}
+                        <span class="badge bg-danger">All Disabled</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">{{ gpo.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if gpo.links %}
+                        {% for link in gpo.links %}
+                        <span class="badge {% if link.enforced %}bg-danger{% elif link.link_disabled %}bg-secondary{% else %}bg-info{% endif %} me-1 mb-1" title="{{ link.container_dn }}">
+                            {{ link.container }}{% if link.enforced %} (Enforced){% endif %}{% if link.link_disabled %} (Disabled){% endif %}
+                        </span>
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted">Unlinked</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ gpo.user_version }} / {{ gpo.computer_version }}</td>
+                    <td><small>{{ gpo.modified }}</small></td>
+                    <td>
+                        <a href="{{ url_for('gpo.detail', dn=gpo.dn) }}" class="btn btn-sm btn-outline-primary" title="Detail">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('attributes.edit', dn=gpo.dn) }}" class="btn btn-sm btn-outline-dark" title="Raw Attributes">
+                            <i class="fas fa-database"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-scroll fa-3x mb-3"></i>
+            <p>No Group Policy Objects found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

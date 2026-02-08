@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% block title %}AD Health{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>AD Health</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-heartbeat me-2"></i>AD Health Dashboard</h4>
+</div>
+
+<div class="row g-4">
+    <!-- Functional Levels -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Functional Levels</h6>
+            </div>
+            <div class="card-body">
+                {% if levels %}
+                <div class="detail-row">
+                    <div class="detail-label">Domain Level</div>
+                    <div class="detail-value"><span class="badge bg-primary">{{ levels.domain }}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Forest Level</div>
+                    <div class="detail-value"><span class="badge bg-info">{{ levels.forest }}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">DC Level</div>
+                    <div class="detail-value"><span class="badge bg-secondary">{{ levels.dc }}</span></div>
+                </div>
+                {% else %}
+                <p class="text-muted">Could not retrieve functional levels.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tombstone / Recycle Bin -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Domain Settings</h6>
+            </div>
+            <div class="card-body">
+                {% if tombstone %}
+                <div class="detail-row">
+                    <div class="detail-label">Tombstone Lifetime</div>
+                    <div class="detail-value">{{ tombstone.tombstone_lifetime }} days</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Deleted Object Lifetime</div>
+                    <div class="detail-value">{{ tombstone.deleted_object_lifetime }} days</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">AD Recycle Bin</div>
+                    <div class="detail-value">
+                        {% if tombstone.recycle_bin %}
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Enabled</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark"><i class="fas fa-times me-1"></i>Disabled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">Could not retrieve domain settings.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FSMO Roles -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-crown me-2"></i>FSMO Role Holders</h6>
+    </div>
+    <div class="card-body">
+        {% if fsmo %}
+        <div class="row g-3">
+            {% for role, holder in fsmo.items() %}
+            <div class="col-md-4">
+                <div class="border rounded p-3">
+                    <small class="text-muted">{{ role }}</small>
+                    <div class="fw-bold"><i class="fas fa-server me-1 text-primary"></i>{{ holder }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Could not retrieve FSMO roles.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Domain Controllers -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-server me-2"></i>Domain Controllers <span class="badge bg-secondary">{{ dcs|length }}</span></h6>
+    </div>
+    <div class="card-body">
+        {% if dcs %}
+        <table class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>DNS</th>
+                    <th>OS</th>
+                    <th>Status</th>
+                    <th>Last Logon</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dc in dcs %}
+                <tr>
+                    <td><i class="fas fa-server me-1 text-primary"></i><strong>{{ dc.cn }}</strong></td>
+                    <td><small>{{ dc.dns_name }}</small></td>
+                    <td>{{ dc.os }} {{ dc.os_version }}</td>
+                    <td>
+                        {% if dc.enabled %}
+                        <span class="badge bg-success">Online</span>
+                        {% else %}
+                        <span class="badge bg-danger">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ dc.last_logon }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No domain controllers found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Replication -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Replication Connections <span class="badge bg-secondary">{{ replication|length }}</span></h6>
+    </div>
+    <div class="card-body">
+        {% if replication %}
+        <table class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Status</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conn in replication %}
+                <tr>
+                    <td><i class="fas fa-server me-1 text-muted"></i>{{ conn.from }}</td>
+                    <td><i class="fas fa-server me-1 text-muted"></i>{{ conn.to }}</td>
+                    <td>
+                        {% if conn.enabled %}
+                        <span class="badge bg-success">Enabled</span>
+                        {% else %}
+                        <span class="badge bg-danger">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if conn.auto_generated %}
+                        <span class="badge bg-secondary">Auto</span>
+                        {% else %}
+                        <span class="badge bg-info">Manual</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No replication connections found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sites & Subnets -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-network-wired me-2"></i>Sites & Subnets <span class="badge bg-secondary">{{ sites|length }}</span></h6>
+    </div>
+    <div class="card-body">
+        {% if sites %}
+        {% for site in sites %}
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1">
+                        <i class="fas fa-map-marker-alt me-1 text-primary"></i>{{ site.cn }}
+                    </h6>
+                    {% if site.description %}
+                    <small class="text-muted">{{ site.description }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <small class="text-muted">Subnets:</small>
+                    {% if site.subnets %}
+                    <ul class="list-unstyled ms-3 mb-0">
+                        {% for subnet in site.subnets %}
+                        <li><code>{{ subnet.name }}</code>
+                            {% if subnet.description %}<small class="text-muted">- {{ subnet.description }}</small>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="text-muted ms-2">None</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted">Servers:</small>
+                    {% if site.servers %}
+                    <ul class="list-unstyled ms-3 mb-0">
+                        {% for server in site.servers %}
+                        <li><i class="fas fa-server me-1 text-muted"></i>{{ server.cn }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="text-muted ms-2">None</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted">No sites found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

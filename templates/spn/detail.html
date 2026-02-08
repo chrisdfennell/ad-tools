@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}SPNs: {{ obj.cn }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('spn.index') }}" class="text-decoration-none text-muted">SPN Management</a>
+<span class="mx-2">/</span>
+<span>{{ obj.cn }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">
+            {% if obj.type == 'computer' %}<i class="fas fa-desktop me-2"></i>
+            {% elif obj.type == 'gmsa' %}<i class="fas fa-cogs me-2"></i>
+            {% else %}<i class="fas fa-user me-2"></i>{% endif %}
+            {{ obj.cn }}
+        </h4>
+        <small class="text-muted">{{ obj.dn }}</small>
+    </div>
+    <span class="badge bg-secondary fs-6">{{ obj.type }}</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-tags me-1"></i>Service Principal Names <span class="badge bg-secondary">{{ obj.spns|length }}</span></span>
+            </div>
+            <div class="card-body">
+                {% if obj.spns %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>SPN</th>
+                            <th width="80">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for spn in obj.spns %}
+                        <tr>
+                            <td><code>{{ spn }}</code></td>
+                            <td>
+                                <form method="POST" action="{{ url_for('spn.remove', sam=obj.sam) }}" class="d-inline">
+                                    <input type="hidden" name="spn" value="{{ spn }}">
+                                    <button class="btn btn-sm btn-outline-danger" data-confirm="Remove SPN '{{ spn }}'?">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted mb-0">No SPNs registered on this object.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-plus me-1"></i>Add SPN</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('spn.add', sam=obj.sam) }}">
+                    <div class="mb-3">
+                        <label class="form-label">SPN Value</label>
+                        <input type="text" name="spn" class="form-control font-monospace" required
+                               placeholder="HTTP/server.domain.com">
+                        <small class="text-muted">Format: service/hostname[:port]</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus me-1"></i>Add SPN
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><i class="fas fa-info-circle me-1"></i>Common SPN Formats</div>
+            <div class="card-body small">
+                <ul class="mb-0">
+                    <li><code>HTTP/hostname</code></li>
+                    <li><code>HTTP/hostname.domain.com</code></li>
+                    <li><code>MSSQLSvc/hostname:1433</code></li>
+                    <li><code>MSSQLSvc/hostname.domain.com</code></li>
+                    <li><code>TERMSRV/hostname</code></li>
+                    <li><code>RestrictedKrbHost/hostname</code></li>
+                    <li><code>HOST/hostname</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

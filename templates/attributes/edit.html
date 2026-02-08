@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Attribute Editor: {{ obj.dn }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('attributes.index') }}" class="text-decoration-none text-muted">Attribute Editor</a>
+<span class="mx-2">/</span>
+<span>Edit</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="fas fa-database me-2"></i>Raw Attributes</h4>
+        <small class="text-muted">{{ obj.dn }}</small>
+    </div>
+    <a href="{{ url_for('attributes.index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list me-1"></i>Attributes <span class="badge bg-secondary">{{ obj.attributes|length }}</span></span>
+                <input type="text" id="attrFilter" class="form-control form-control-sm" style="width:250px" placeholder="Filter attributes...">
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0" id="attrTable">
+                    <thead>
+                        <tr>
+                            <th style="width:35%">Attribute</th>
+                            <th>Value</th>
+                            <th style="width:80px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attr, value in obj.attributes.items() %}
+                        <tr class="attr-row">
+                            <td><code>{{ attr }}</code></td>
+                            <td class="text-break">
+                                {% if value is string %}
+                                    <span class="attr-value">{{ value[:500] }}{% if value|length > 500 %}...{% endif %}</span>
+                                {% elif value is iterable %}
+                                    {% for v in value %}
+                                    <span class="badge bg-secondary me-1 mb-1">{{ v[:200] }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="attr-value">{{ value }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary edit-attr-btn"
+                                        data-attr="{{ attr }}"
+                                        data-value="{% if value is string %}{{ value }}{% endif %}"
+                                        title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Edit attribute panel -->
+        <div class="card" id="editPanel" style="display:none">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-pen me-1"></i>Edit Attribute</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('attributes.edit_submit') }}">
+                    <input type="hidden" name="dn" value="{{ obj.dn }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Attribute Name</label>
+                        <input type="text" name="attribute" id="editAttrName" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Value <small class="text-muted">(leave empty to clear)</small></label>
+                        <textarea name="value" id="editAttrValue" class="form-control" rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" data-confirm="Save this attribute change?">
+                        <i class="fas fa-save me-1"></i>Save
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add new attribute -->
+        <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-plus me-1"></i>Set New Attribute</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('attributes.edit_submit') }}">
+                    <input type="hidden" name="dn" value="{{ obj.dn }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Attribute Name</label>
+                        <input type="text" name="attribute" class="form-control" placeholder="e.g. extensionAttribute1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Value</label>
+                        <textarea name="value" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-plus me-1"></i>Set Attribute
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    // Filter attributes
+    document.getElementById('attrFilter').addEventListener('input', function() {
+        var filter = this.value.toLowerCase();
+        document.querySelectorAll('.attr-row').forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            row.style.display = text.indexOf(filter) >= 0 ? '' : 'none';
+        });
+    });
+
+    // Edit button click
+    document.querySelectorAll('.edit-attr-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var attr = this.dataset.attr;
+            var value = this.dataset.value;
+            document.getElementById('editAttrName').value = attr;
+            document.getElementById('editAttrValue').value = value;
+            document.getElementById('editPanel').style.display = 'block';
+            document.getElementById('editPanel').scrollIntoView({behavior: 'smooth'});
+        });
+    });
+})();
+</script>
+{% endblock %}

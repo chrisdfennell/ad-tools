@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Attribute Editor{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Attribute Editor</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Raw Attribute Editor</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted">Search for any AD object by name to browse and edit its raw LDAP attributes.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Search for an object</label>
+                    <input type="text" id="objSearch" class="form-control" placeholder="Type a name to search (min 2 chars)..." autocomplete="off">
+                </div>
+                <div id="searchResults" class="list-group"></div>
+                <hr>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Or enter a DN directly</label>
+                    <form method="GET" action="{{ url_for('attributes.edit') }}" class="d-flex gap-2">
+                        <input type="text" name="dn" class="form-control" placeholder="CN=John Doe,OU=Users,DC=example,DC=org">
+                        <button type="submit" class="btn btn-primary text-nowrap">
+                            <i class="fas fa-search me-1"></i>Load
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var searchInput = document.getElementById('objSearch');
+    var resultsDiv = document.getElementById('searchResults');
+    var timer = null;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timer);
+        var q = searchInput.value.trim();
+        if (q.length < 2) { resultsDiv.innerHTML = ''; return; }
+        timer = setTimeout(function() {
+            fetch('{{ url_for("attributes.api_search") }}?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                resultsDiv.innerHTML = '';
+                data.forEach(function(obj) {
+                    var icon = obj.type === 'User' ? 'fa-user' :
+                               obj.type === 'Computer' ? 'fa-desktop' :
+                               obj.type === 'Group' ? 'fa-layer-group' :
+                               obj.type === 'OU' ? 'fa-sitemap' : 'fa-cube';
+                    var a = document.createElement('a');
+                    a.href = '{{ url_for("attributes.edit") }}?dn=' + encodeURIComponent(obj.dn);
+                    a.className = 'list-group-item list-group-item-action d-flex align-items-center';
+                    a.innerHTML = '<i class="fas ' + icon + ' me-3 text-muted"></i>' +
+                        '<div><strong>' + obj.cn + '</strong>' +
+                        (obj.sam ? ' <code class="ms-1">' + obj.sam + '</code>' : '') +
+                        '<br><small class="text-muted">' + obj.type + ' — ' + obj.dn + '</small></div>';
+                    resultsDiv.appendChild(a);
+                });
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="list-group-item text-muted">No objects found.</div>';
+                }
+            });
+        }, 300);
+    });
+})();
+</script>
+{% endblock %}

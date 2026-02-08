@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Privileged Accounts{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Privileged Accounts</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-user-shield me-2"></i>Privileged Account Report <span class="badge bg-danger">{{ accounts|length }}</span></h4>
+    <a href="{{ url_for('reports.privileged_export') }}" class="btn btn-sm btn-outline-success" title="Export CSV">
+        <i class="fas fa-download me-1"></i>CSV
+    </a>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    This report shows accounts with elevated privileges: users with <code>adminCount=1</code> and members of
+    well-known privileged groups (Domain Admins, Enterprise Admins, Schema Admins, Administrators,
+    Account Operators, Server Operators, Backup Operators, Print Operators). Nested group memberships are included.
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if accounts %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Display Name</th>
+                    <th>Status</th>
+                    <th>Privilege Source</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acct in accounts %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('users.detail', sam=acct.sam) }}" class="fw-bold text-decoration-none">
+                            <i class="fas fa-user-shield me-1 text-danger"></i>{{ acct.sam }}
+                        </a>
+                    </td>
+                    <td>{{ acct.display_name }}</td>
+                    <td>
+                        {% if acct.status == 'enabled' %}
+                        <span class="badge badge-enabled">Enabled</span>
+                        {% else %}
+                        <span class="badge badge-disabled">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for src in acct.source.split(', ') %}
+                        <span class="badge bg-danger me-1">{{ src }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('users.detail', sam=acct.sam) }}" class="btn btn-sm btn-outline-primary" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('attributes.edit') }}?dn={{ acct.dn|urlencode }}" class="btn btn-sm btn-outline-dark" title="Edit Attributes">
+                            <i class="fas fa-database"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+            <p>No privileged accounts found (or unable to query).</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

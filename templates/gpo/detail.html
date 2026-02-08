@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}GPO: {{ gpo.attributes.get('displayName', 'Unknown') }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('gpo.list_gpos') }}" class="text-decoration-none text-muted">Group Policy</a>
+<span class="mx-2">/</span>
+<span>{{ gpo.attributes.get('displayName', 'Detail') }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="fas fa-scroll me-2"></i>{{ gpo.attributes.get('displayName', 'Unknown GPO') }}</h4>
+        <small class="text-muted">{{ gpo.dn }}</small>
+    </div>
+    <a href="{{ url_for('attributes.edit', dn=gpo.dn) }}" class="btn btn-outline-dark">
+        <i class="fas fa-database me-1"></i>Raw Attributes
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- GPO Attributes -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="fas fa-info-circle me-1"></i>GPO Properties</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for key, val in gpo.attributes.items() %}
+                        <tr>
+                            <td style="width:35%" class="fw-bold"><code>{{ key }}</code></td>
+                            <td class="text-break">
+                                {% if val is string %}
+                                {{ val[:500] }}
+                                {% elif val is iterable %}
+                                {% for v in val %}<span class="badge bg-secondary me-1">{{ v[:200] }}</span>{% endfor %}
+                                {% else %}
+                                {{ val }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Links -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-link me-1"></i>Linked To ({{ gpo.links|length }})</span>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#linkGpoModal">
+                    <i class="fas fa-plus me-1"></i>Link
+                </button>
+            </div>
+            <div class="card-body">
+                {% if gpo.links %}
+                {% for link in gpo.links %}
+                <div class="border rounded p-2 mb-2">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <i class="fas fa-sitemap me-1 text-muted"></i>
+                            <strong>{{ link.container }}</strong>
+                            <br><small class="text-muted text-break">{{ link.container_dn }}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 mt-2">
+                        {% if link.enforced %}
+                        <span class="badge bg-danger">Enforced</span>
+                        {% endif %}
+                        {% if link.link_disabled %}
+                        <span class="badge bg-secondary">Link Disabled</span>
+                        {% endif %}
+                        {% if not link.enforced and not link.link_disabled %}
+                        <span class="badge bg-success">Active</span>
+                        {% endif %}
+
+                        <div class="ms-auto d-flex gap-1">
+                            <!-- Toggle Enable/Disable -->
+                            <form method="POST" action="{{ url_for('gpo.toggle_link') }}">
+                                <input type="hidden" name="gpo_dn" value="{{ gpo.dn }}">
+                                <input type="hidden" name="container_dn" value="{{ link.container_dn }}">
+                                <button class="btn btn-sm btn-outline-{{ 'success' if link.link_disabled else 'warning' }}"
+                                        title="{{ 'Enable Link' if link.link_disabled else 'Disable Link' }}">
+                                    <i class="fas fa-{{ 'play' if link.link_disabled else 'pause' }}"></i>
+                                </button>
+                            </form>
+                            <!-- Toggle Enforced -->
+                            <form method="POST" action="{{ url_for('gpo.set_enforced') }}">
+                                <input type="hidden" name="gpo_dn" value="{{ gpo.dn }}">
+                                <input type="hidden" name="container_dn" value="{{ link.container_dn }}">
+                                <input type="hidden" name="enforced" value="{{ '0' if link.enforced else '1' }}">
+                                <button class="btn btn-sm btn-outline-{{ 'secondary' if link.enforced else 'danger' }}"
+                                        title="{{ 'Remove Enforce' if link.enforced else 'Set Enforced' }}">
+                                    <i class="fas fa-gavel"></i>
+                                </button>
+                            </form>
+                            <!-- Unlink -->
+                            <form method="POST" action="{{ url_for('gpo.unlink') }}">
+                                <input type="hidden" name="gpo_dn" value="{{ gpo.dn }}">
+                                <input type="hidden" name="container_dn" value="{{ link.container_dn }}">
+                                <button class="btn btn-sm btn-outline-danger"
+                                        data-confirm="Unlink GPO from '{{ link.container }}'?"
+                                        title="Unlink">
+                                    <i class="fas fa-unlink"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted mb-0">This GPO is not linked to any container.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link GPO Modal -->
+<div class="modal fade" id="linkGpoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('gpo.link') }}">
+                <input type="hidden" name="gpo_dn" value="{{ gpo.dn }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Link GPO to Container</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">GPO</label>
+                        <input type="text" class="form-control" value="{{ gpo.attributes.get('displayName', '') }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Target OU / Domain</label>
+                        <select name="container_dn" class="form-select" required>
+                            <option value="">Select container...</option>
+                            {% if containers is defined %}
+                            {% for c in containers %}
+                            <option value="{{ c.dn }}">
+                                {% if c.type == 'domain' %}[Domain] {% endif %}{{ c.name }}
+                            </option>
+                            {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="enforced" id="enforcedCheck">
+                        <label class="form-check-label" for="enforcedCheck">Enforced</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Link GPO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

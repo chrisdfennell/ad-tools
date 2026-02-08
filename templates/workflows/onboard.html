@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}New Hire Onboarding{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Onboarding</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>New Hire Onboarding Workflow</h4>
+</div>
+
+<form method="POST">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Step 1: User Info -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-primary me-2">1</span>User Information</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="fname" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="lname" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mobile</label>
+                            <input type="text" name="mobile" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Organization -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-primary me-2">2</span>Organization</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Title</label>
+                            <input type="text" name="title" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Company</label>
+                            <input type="text" name="company" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Target OU</label>
+                            <select name="target_ou" class="form-select">
+                                <option value="">Default Users OU</option>
+                                {% for ou in ous %}
+                                <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Manager DN</label>
+                        <input type="text" name="manager_dn" class="form-control" placeholder="CN=Manager Name,OU=Users,...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="description" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Group Membership -->
+            <div class="card mb-4">
+                <div class="card-header"><span class="badge bg-primary me-2">3</span>Group Membership</div>
+                <div class="card-body">
+                    <div class="position-relative mb-3">
+                        <input type="text" id="groupSearch" class="form-control" placeholder="Search for groups to add..." autocomplete="off">
+                        <div id="groupResults" class="list-group position-absolute w-100" style="z-index:100; display:none;"></div>
+                    </div>
+                    <div id="selectedGroups" class="d-flex flex-wrap gap-1"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold">
+                <i class="fas fa-rocket me-2"></i>Create User & Complete Onboarding
+            </button>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-list-check me-1"></i>Onboarding Checklist</div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Create AD account</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Set initial password</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Place in correct OU</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Add to groups</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-1"></i> Set manager</li>
+                        <li class="mb-2 text-muted"><i class="far fa-circle me-1"></i> Configure email (manual)</li>
+                        <li class="mb-2 text-muted"><i class="far fa-circle me-1"></i> Assign licenses (manual)</li>
+                        <li class="text-muted"><i class="far fa-circle me-1"></i> Setup workstation (manual)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const groupSearch = document.getElementById('groupSearch');
+    const groupResults = document.getElementById('groupResults');
+    const selectedDiv = document.getElementById('selectedGroups');
+    const selectedGroups = new Map();
+    let timeout;
+
+    groupSearch.addEventListener('input', function() {
+        clearTimeout(timeout);
+        const q = this.value.trim();
+        if (q.length < 2) { groupResults.style.display = 'none'; return; }
+        timeout = setTimeout(function() {
+            fetch('{{ url_for("groups.search_users_api") }}?q=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(function(items) {
+                    // Reuse the groups search endpoint would need a separate one
+                    // For now use the bulk_groups API if available
+                });
+            // Use a simple groups API
+            fetch('/bulk-groups/api/search-groups?q=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(function(groups) {
+                    groupResults.innerHTML = '';
+                    if (groups.length === 0) {
+                        groupResults.innerHTML = '<div class="list-group-item text-muted">No groups found</div>';
+                    }
+                    groups.forEach(function(g) {
+                        const a = document.createElement('a');
+                        a.className = 'list-group-item list-group-item-action';
+                        a.href = '#';
+                        a.textContent = g.cn + ' [' + (g.type_label || '') + ']';
+                        a.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            selectedGroups.set(g.dn, g.cn);
+                            groupSearch.value = '';
+                            groupResults.style.display = 'none';
+                            renderSelected();
+                        });
+                        groupResults.appendChild(a);
+                    });
+                    groupResults.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    function renderSelected() {
+        selectedDiv.innerHTML = '';
+        selectedGroups.forEach(function(name, dn) {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary d-flex align-items-center gap-1';
+            badge.innerHTML = name + ' <i class="fas fa-times" style="cursor:pointer"></i>';
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'group_dns';
+            hidden.value = dn;
+            badge.querySelector('i').addEventListener('click', function() {
+                selectedGroups.delete(dn);
+                renderSelected();
+            });
+            selectedDiv.appendChild(badge);
+            selectedDiv.appendChild(hidden);
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!groupResults.contains(e.target) && e.target !== groupSearch) {
+            groupResults.style.display = 'none';
+        }
+    });
+})();
+</script>
+{% endblock %}

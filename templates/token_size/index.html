@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Kerberos Token Size Estimator{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Token Size Estimator</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>Kerberos Token Size Estimator</h4>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="POST" class="d-flex gap-2">
+                    <input type="text" name="sam" class="form-control" placeholder="Enter sAMAccountName..."
+                           value="{{ sam }}" required>
+                    <button class="btn btn-primary text-nowrap"><i class="fas fa-calculator me-1"></i>Estimate</button>
+                </form>
+            </div>
+        </div>
+
+        {% if result %}
+        <!-- Token Size Result -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user me-1"></i>{{ result.user.cn }} ({{ result.user.sam }})</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h2 class="mb-0 text-{{ 'danger' if result.token.severity == 'critical' else 'warning' if result.token.severity == 'warning' else 'success' }}">
+                                {{ '{:,}'.format(result.token.estimated_size) }}
+                            </h2>
+                            <small class="text-muted">Estimated bytes</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h2 class="mb-0">{{ result.stats.total_groups }}</h2>
+                            <small class="text-muted">Total groups</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h2 class="mb-0">
+                                {% if result.token.severity == 'critical' %}
+                                <span class="badge bg-danger">CRITICAL</span>
+                                {% elif result.token.severity == 'warning' %}
+                                <span class="badge bg-warning text-dark">WARNING</span>
+                                {% else %}
+                                <span class="badge bg-success">OK</span>
+                                {% endif %}
+                            </h2>
+                            <small class="text-muted">Status</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress bar -->
+                {% set pct = (result.token.estimated_size / result.token.critical_threshold * 100) | int %}
+                {% if pct > 100 %}{% set pct = 100 %}{% endif %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>0</span>
+                        <span>{{ '{:,}'.format(result.token.warning_threshold) }} (HTTP warning)</span>
+                        <span>{{ '{:,}'.format(result.token.critical_threshold) }} (MaxTokenSize)</span>
+                    </div>
+                    <div class="progress" style="height: 24px;">
+                        <div class="progress-bar bg-{{ 'danger' if result.token.severity == 'critical' else 'warning' if result.token.severity == 'warning' else 'success' }}"
+                             style="width: {{ pct }}%">
+                            {{ '{:,}'.format(result.token.estimated_size) }} bytes
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group breakdown -->
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="border rounded p-2 text-center">
+                            <strong>{{ result.stats.direct_groups }}</strong><br>
+                            <small class="text-muted">Direct</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-2 text-center">
+                            <strong>{{ result.stats.nested_groups }}</strong><br>
+                            <small class="text-muted">Nested</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-2 text-center">
+                            <strong>{{ result.stats.global_count }}</strong><br>
+                            <small class="text-muted">Global</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border rounded p-2 text-center">
+                            <strong>{{ result.stats.domain_local_count }}</strong><br>
+                            <small class="text-muted">Domain Local</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group list -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-layer-group me-1"></i>All Group Memberships <span class="badge bg-secondary">{{ result.groups|length }}</span></h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Group</th>
+                            <th>Type</th>
+                            <th>Membership</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in result.groups %}
+                        <tr>
+                            <td><i class="fas fa-layer-group me-1 text-muted"></i>{{ g.cn }}</td>
+                            <td><span class="badge bg-secondary">{{ g.type_label }}</span></td>
+                            <td>
+                                {% if g.direct %}
+                                <span class="badge bg-primary">Direct</span>
+                                {% else %}
+                                <span class="badge bg-info">Nested</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-info-circle me-1"></i>About Token Size</div>
+            <div class="card-body small">
+                <p>The Kerberos ticket contains Security Identifiers (SIDs) for every group the user belongs to, including nested groups.</p>
+                <p><strong>Thresholds:</strong></p>
+                <ul>
+                    <li><span class="badge bg-success">OK</span> Under 12,000 bytes</li>
+                    <li><span class="badge bg-warning text-dark">Warning</span> 12,000 - 48,000 bytes. May cause HTTP authentication failures.</li>
+                    <li><span class="badge bg-danger">Critical</span> Over 48,000 bytes. Exceeds default MaxTokenSize.</li>
+                </ul>
+                <p><strong>Estimation formula:</strong></p>
+                <p class="font-monospace small">1200 + (groups x 40) + (domain_local x 40)</p>
+                <p class="mb-0"><strong>Remediation:</strong> Remove unnecessary group memberships, consolidate groups, or increase MaxTokenSize via GPO.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

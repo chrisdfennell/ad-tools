@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}DNS Zones{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>DNS</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-globe me-2"></i>AD-Integrated DNS Zones <span class="badge bg-secondary">{{ zones|length }}</span></h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if zones %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Zone Name</th>
+                    <th>Partition</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zone in zones %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('dns.records', zone_dn=zone.dn, zone_name=zone.name) }}" class="fw-bold text-decoration-none">
+                            <i class="fas fa-globe me-1 text-info"></i>{{ zone.name }}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-secondary">{{ zone.partition }}</span></td>
+                    <td><small>{{ zone.created }}</small></td>
+                    <td>
+                        <a href="{{ url_for('dns.records', zone_dn=zone.dn, zone_name=zone.name) }}" class="btn btn-sm btn-outline-primary" title="View Records">
+                            <i class="fas fa-list me-1"></i>Records
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-globe fa-3x mb-3"></i>
+            <p>No AD-integrated DNS zones found. DNS may not be AD-integrated or you may not have permissions.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

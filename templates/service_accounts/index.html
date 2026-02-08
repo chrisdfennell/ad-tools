@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Service Accounts{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Service Accounts</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-robot me-2"></i>Service Accounts <span class="badge bg-secondary">{{ accounts|length }}</span></h4>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Accounts detected as service accounts: password never expires, SPNs set, or naming convention matches (svc*, service*).
+    <span class="badge bg-danger">High</span> risk accounts have 3+ risk factors.
+    <span class="badge bg-warning text-dark">Kerberoastable</span> accounts have SPNs and are enabled.
+</div>
+
+<!-- Summary cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ accounts|length }}</div>
+            <div class="stat-label">Total Service Accounts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value text-danger">{{ accounts|selectattr('has_spn')|list|length }}</div>
+            <div class="stat-label">With SPNs (Kerberoastable)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value text-warning">{{ accounts|selectattr('pwd_never_expires')|list|length }}</div>
+            <div class="stat-label">Password Never Expires</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value text-danger">{{ accounts|selectattr('risk_level', 'equalto', 'high')|list|length }}</div>
+            <div class="stat-label">High Risk</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if accounts %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Password Age</th>
+                    <th>SPNs</th>
+                    <th>Risks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acct in accounts %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('users.detail', sam=acct.sam) }}" class="fw-bold text-decoration-none">
+                            <i class="fas fa-robot me-1 text-muted"></i>{{ acct.sam }}
+                        </a>
+                        <br><small class="text-muted">{{ acct.display_name }}</small>
+                    </td>
+                    <td><small>{{ acct.description[:80] }}</small></td>
+                    <td>
+                        {% if acct.status == 'enabled' %}
+                        <span class="badge badge-enabled">Enabled</span>
+                        {% else %}
+                        <span class="badge badge-disabled">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if acct.pwd_age_days is not none %}
+                        <span class="{% if acct.pwd_age_days > 365 %}text-danger fw-bold{% elif acct.pwd_age_days > 180 %}text-warning{% endif %}">
+                            {{ acct.pwd_age_days }}d
+                        </span>
+                        {% else %}
+                        <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if acct.spns %}
+                        <span class="badge bg-warning text-dark" title="{{ acct.spns|join(', ') }}">
+                            {{ acct.spns|length }} SPN(s)
+                        </span>
+                        {% else %}
+                        <span class="text-muted">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for risk in acct.risks %}
+                        <span class="badge {% if 'Kerberoast' in risk %}bg-danger{% elif 'Delegation' in risk %}bg-danger{% elif 'Password' in risk and 'old' in risk %}bg-warning text-dark{% else %}bg-warning text-dark{% endif %} mb-1">
+                            {{ risk }}
+                        </span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('users.detail', sam=acct.sam) }}" class="btn btn-sm btn-outline-primary" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('attributes.edit', dn=acct.dn) }}" class="btn btn-sm btn-outline-dark" title="Attributes">
+                            <i class="fas fa-database"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-robot fa-3x mb-3"></i>
+            <p>No service accounts detected.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Effective Password Policy{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('fgpp.index') }}" class="text-decoration-none text-muted">Password Policies</a>
+<span class="mx-2">/</span>
+<span>Effective Policy</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-user-shield me-2"></i>Effective Password Policy</h4>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="sam" class="form-control"
+                   placeholder="Enter sAMAccountName to check..." value="{{ sam }}" autofocus>
+            <button class="btn btn-primary" type="submit">
+                <i class="fas fa-search me-1"></i>Check
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if policy %}
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            Effective policy for <strong>{{ sam }}</strong>:
+            <span class="badge bg-info ms-2">{{ policy.cn }}</span>
+            {% if policy.get('is_default') %}
+            <span class="badge bg-secondary ms-1">Default Domain Policy</span>
+            {% else %}
+            <span class="badge bg-primary ms-1">Fine-Grained</span>
+            {% endif %}
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="fs-3 fw-bold text-primary">{{ policy.min_length }}</div>
+                    <small class="text-muted">Min Length</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="fs-3 fw-bold text-primary">{{ policy.history_length }}</div>
+                    <small class="text-muted">History</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="fs-3 fw-bold text-primary">{{ policy.lockout_threshold }}</div>
+                    <small class="text-muted">Lockout Threshold</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="fs-5 fw-bold {% if policy.complexity_enabled %}text-success{% else %}text-danger{% endif %}">
+                        {{ 'Yes' if policy.complexity_enabled else 'No' }}
+                    </div>
+                    <small class="text-muted">Complexity</small>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-md-4">
+                <div class="detail-row">
+                    <div class="detail-label">Max Password Age</div>
+                    <div class="detail-value">{{ policy.max_age_display }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="detail-row">
+                    <div class="detail-label">Min Password Age</div>
+                    <div class="detail-value">{{ policy.min_age_display }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="detail-row">
+                    <div class="detail-label">Lockout Duration</div>
+                    <div class="detail-value">{{ policy.lockout_duration_display }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% elif sam %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        <p>Could not determine effective policy for "{{ sam }}".</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

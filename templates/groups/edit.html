@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ group.cn }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('groups.list_groups') }}" class="text-decoration-none text-muted">Groups</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('groups.detail', cn=group.cn) }}" class="text-decoration-none text-muted">{{ group.cn }}</a>
+<span class="mx-2">/</span>
+<span>Edit</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-pen me-2"></i>Edit Group: {{ group.cn }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="form-section">
+                        <h6><i class="fas fa-layer-group me-1"></i> Group Details</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" value="{{ group.cn }}" disabled>
+                            <small class="text-muted">Group name cannot be changed here.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">SAM Account Name</label>
+                            <input type="text" class="form-control" value="{{ group.sam }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <input type="text" class="form-control" value="{{ group.group_type_label }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ group.description }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Managed By (DN)</label>
+                            <input type="text" name="managedBy" class="form-control" value="{{ group.managed_by }}"
+                                   placeholder="CN=User Name,OU=Users,DC=example,DC=com">
+                            <small class="text-muted">Enter the full distinguished name of the manager.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill py-2 fw-bold">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('groups.detail', cn=group.cn) }}" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

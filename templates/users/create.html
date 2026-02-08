@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Create User{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<a href="{{ url_for('users.list_users') }}" class="text-decoration-none text-muted">Users</a>
+<span class="mx-2">/</span>
+<span>Create User</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Create New User</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <!-- Identity -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-id-card me-1"></i> Identity</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" name="fname" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" name="lname" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" name="username" class="form-control" placeholder="jdoe" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-address-book me-1"></i> Contact Information</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="jdoe@{{ domain_display }}">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="text" name="phone" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile</label>
+                                <input type="text" name="mobile" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-building me-1"></i> Organization</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Title</label>
+                                <input type="text" name="title" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <input type="text" name="department" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Company</label>
+                            <input type="text" name="company" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Placement -->
+                    <div class="form-section">
+                        <h6><i class="fas fa-sitemap me-1"></i> Placement</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Target OU</label>
+                            <select name="target_ou" class="form-select">
+                                <option value="">Default ({{ config.USER_OU }})</option>
+                                {% for ou in ous %}
+                                <option value="{{ ou.dn }}">{{ ou.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                        <i class="fas fa-user-plus me-2"></i>Create User
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

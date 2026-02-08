@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Recycle Bin{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Recycle Bin</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fas fa-trash-restore me-2"></i>AD Recycle Bin <span class="badge bg-secondary">{{ objects|length }}</span></h4>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if objects %}
+        <table class="table table-hover datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Type</th>
+                    <th>Deleted</th>
+                    <th>Original Location</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in objects %}
+                <tr>
+                    <td><i class="fas fa-{% if obj.type == 'User' %}user{% elif obj.type == 'Computer' %}desktop{% elif obj.type == 'Group' %}layer-group{% else %}sitemap{% endif %} me-2 text-muted"></i>{{ obj.cn }}</td>
+                    <td><code>{{ obj.sam or '—' }}</code></td>
+                    <td><span class="badge bg-secondary">{{ obj.type }}</span></td>
+                    <td><small>{{ obj.when_deleted }}</small></td>
+                    <td><small class="text-muted">{{ obj.last_known_parent }}</small></td>
+                    <td>
+                        <form method="POST" action="{{ url_for('recycle.restore') }}" class="d-inline">
+                            <input type="hidden" name="deleted_dn" value="{{ obj.dn }}">
+                            <button class="btn btn-sm btn-outline-success" data-confirm="Restore '{{ obj.cn }}' to its original location?">
+                                <i class="fas fa-trash-restore me-1"></i>Restore
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-recycle fa-3x mb-3 text-success"></i>
+            <p>Recycle bin is empty. Deleted objects will appear here if AD Recycle Bin is enabled.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

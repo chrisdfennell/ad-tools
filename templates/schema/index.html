@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Schema Browser{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+<span class="mx-2">/</span>
+<span>Schema Browser</span>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="fas fa-cubes me-2"></i>AD Schema Browser</h4>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if tab == 'classes' }}" href="{{ url_for('schema.index', tab='classes', q=query) }}">
+            <i class="fas fa-cube me-1"></i>Object Classes
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if tab == 'attributes' }}" href="{{ url_for('schema.index', tab='attributes', q=query) }}">
+            <i class="fas fa-list me-1"></i>Attributes
+        </a>
+    </li>
+</ul>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <form method="GET" class="d-flex gap-2 align-items-center">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Search {{ tab }}..." value="{{ query }}" style="max-width:400px">
+            <button class="btn btn-sm btn-primary"><i class="fas fa-search"></i></button>
+            {% if query %}
+            <a href="{{ url_for('schema.index', tab=tab) }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if tab == 'classes' %}
+<!-- Object Classes -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">Object Classes</h5>
+        <span class="badge bg-secondary">{{ classes|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if classes %}
+        <table class="table table-hover table-sm mb-0 datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>LDAP Name</th>
+                    <th>Category</th>
+                    <th>Parent</th>
+                    <th>Must Attrs</th>
+                    <th>May Attrs</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cls in classes %}
+                <tr>
+                    <td><code class="fw-bold">{{ cls.ldap_name }}</code></td>
+                    <td>
+                        <span class="badge bg-{{ 'primary' if cls.category == 'Structural' else 'info' if cls.category == 'Auxiliary' else 'secondary' }}">
+                            {{ cls.category }}
+                        </span>
+                    </td>
+                    <td><code>{{ cls.parent }}</code></td>
+                    <td><span class="badge bg-danger">{{ cls.must_contain|length }}</span></td>
+                    <td><span class="badge bg-success">{{ cls.may_contain|length }}</span></td>
+                    <td><small>{{ cls.description[:80] }}{% if cls.description|length > 80 %}...{% endif %}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">No object classes found{% if query %} matching "{{ query }}"{% endif %}.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+<!-- Attributes -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">Attributes</h5>
+        <span class="badge bg-secondary">{{ attrs|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if attrs %}
+        <table class="table table-hover table-sm mb-0 datatable" style="width:100%">
+            <thead>
+                <tr>
+                    <th>LDAP Name</th>
+                    <th>Syntax</th>
+                    <th>Multi-Valued</th>
+                    <th>Indexed</th>
+                    <th>GC</th>
+                    <th>System</th>
+                    <th>Range</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attr in attrs %}
+                <tr>
+                    <td><code class="fw-bold">{{ attr.ldap_name }}</code></td>
+                    <td><small>{{ attr.syntax }}</small></td>
+                    <td>
+                        {% if not attr.single_valued %}
+                        <i class="fas fa-check text-success"></i>
+                        {% else %}
+                        <i class="fas fa-minus text-muted"></i>
+                        {% endif %}
+                    </td>
+                    <td>{% if attr.indexed %}<i class="fas fa-check text-primary"></i>{% endif %}</td>
+                    <td>{% if attr.gc_replicated %}<i class="fas fa-globe text-info" title="Global Catalog"></i>{% endif %}</td>
+                    <td>{% if attr.system_only %}<i class="fas fa-lock text-danger" title="System Only"></i>{% endif %}</td>
+                    <td>
+                        {% if attr.range_lower or attr.range_upper %}
+                        <small>{{ attr.range_lower or '' }}-{{ attr.range_upper or '' }}</small>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ (attr.description or '')[:60] }}{% if attr.description and attr.description|length > 60 %}...{% endif %}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">No attributes found{% if query %} matching "{{ query }}"{% endif %}.</div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
