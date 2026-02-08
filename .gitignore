@@ -28,6 +28,7 @@ Desktop.ini
 # Environment & secrets
 .env
 docker-compose.override.yml
+docker-compose.local.yml
 
 # Application data (SQLite databases)
 data/
