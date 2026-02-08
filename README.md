@@ -169,26 +169,212 @@ If neither `HELPDESK_GROUP` nor `VIEWER_GROUP` is configured, only Domain Admins
 
 ```
 ad-tools/
-├── app.py                  # Flask app factory, blueprint registration
-├── config.py               # Configuration from environment variables
-├── Dockerfile              # Python 3.11-slim + Gunicorn
-├── docker-compose.yml      # Container orchestration
-├── requirements.txt        # flask, ldap3, gunicorn
-├── openssl_legacy.cnf      # Enables MD4 for NTLM (required in modern OpenSSL)
-├── blueprints/             # 33 Flask blueprints (one per feature)
-├── services/               # Business logic & LDAP operations
-│   ├── ad_connection.py    # Shared LDAP connection helper
-│   ├── ad_users.py         # User CRUD operations
-│   ├── ad_groups.py        # Group operations
-│   ├── rbac.py             # Role & permission checking
-│   ├── audit.py            # SQLite audit logging
-│   └── ...                 # One service per feature area
-├── templates/              # Jinja2 templates
-│   ├── base.html           # Layout with sidebar navigation
-│   └── .../                # Per-feature template directories
+├── app.py                          # Flask app factory, blueprint registration
+├── config.py                       # Configuration from environment variables
+├── Dockerfile                      # Python 3.11-slim + Gunicorn
+├── docker-compose.yml              # Container orchestration
+├── requirements.txt                # flask, ldap3, gunicorn
+├── openssl_legacy.cnf              # Enables MD4 for NTLM (required in modern OpenSSL)
+├── LICENSE                         # MIT License
+│
+├── blueprints/                     # Flask blueprints (one per feature)
+│   ├── __init__.py
+│   ├── acl.py                      # Object ACL/permissions viewer
+│   ├── activity.py                 # Activity monitor
+│   ├── ad_health.py                # AD health dashboard
+│   ├── api.py                      # REST API endpoints
+│   ├── attributes.py               # Raw attribute editor
+│   ├── audit.py                    # Audit log viewer
+│   ├── auth.py                     # Login/logout
+│   ├── bitlocker.py                # BitLocker key retrieval
+│   ├── bulk_attr.py                # Bulk attribute editor
+│   ├── bulk_groups.py              # Bulk group membership
+│   ├── computers.py                # Computer management
+│   ├── dashboard.py                # Dashboard with charts
+│   ├── delegation.py               # Delegation viewer
+│   ├── dns.py                      # DNS zone/record browser
+│   ├── dynamic_groups.py           # Dynamic group rules
+│   ├── fgpp.py                     # Fine-grained password policies
+│   ├── gmsa.py                     # gMSA accounts
+│   ├── gpo.py                      # Group Policy objects
+│   ├── group_nesting.py            # Group nesting visualizer
+│   ├── groups.py                   # Group management
+│   ├── laps.py                     # LAPS password retrieval
+│   ├── ldap_query.py               # Custom LDAP query tool
+│   ├── lockout.py                  # Account lockout insight
+│   ├── orgchart.py                 # Org chart viewer
+│   ├── ous.py                      # OU browser
+│   ├── photos.py                   # User photo management
+│   ├── recycle.py                  # Recycle bin browser
+│   ├── replication.py              # Replication status monitor
+│   ├── reports.py                  # Built-in reports
+│   ├── scheduled_reports.py        # Scheduled email reports
+│   ├── schema.py                   # Schema browser
+│   ├── search.py                   # Global search
+│   ├── service_accounts.py         # Service account finder
+│   ├── settings.py                 # Application settings UI
+│   ├── sites.py                    # Sites & subnets viewer
+│   ├── spn.py                      # SPN management
+│   ├── token_size.py               # Kerberos token size estimator
+│   ├── users.py                    # User management
+│   └── workflows.py                # Onboarding/offboarding wizards
+│
+├── services/                       # Business logic & LDAP operations
+│   ├── __init__.py
+│   ├── ad_acl.py                   # Security descriptor parsing
+│   ├── ad_activity.py              # Recent AD modifications
+│   ├── ad_attributes.py            # Raw attribute read/write
+│   ├── ad_bitlocker.py             # BitLocker recovery keys
+│   ├── ad_bulk_attr.py             # Bulk attribute modifications
+│   ├── ad_computers.py             # Computer CRUD
+│   ├── ad_connection.py            # Shared LDAP connection helper
+│   ├── ad_dashboard.py             # Dashboard stats & chart data
+│   ├── ad_delegation.py            # Delegation detection
+│   ├── ad_dns.py                   # DNS zone/record queries
+│   ├── ad_fgpp.py                  # FGPP queries
+│   ├── ad_gmsa.py                  # gMSA queries
+│   ├── ad_gpo.py                   # GPO queries & link management
+│   ├── ad_group_nesting.py         # Nested group resolution
+│   ├── ad_groups.py                # Group CRUD
+│   ├── ad_health.py                # FSMO, func levels, DC inventory
+│   ├── ad_laps.py                  # LAPS password retrieval
+│   ├── ad_ldap_query.py            # Custom LDAP query execution
+│   ├── ad_lockout.py               # Lockout policy & status
+│   ├── ad_orgchart.py              # Manager hierarchy queries
+│   ├── ad_ous.py                   # OU CRUD
+│   ├── ad_photos.py                # thumbnailPhoto read/write
+│   ├── ad_recycle.py               # Deleted object queries
+│   ├── ad_replication.py           # NTDS replication topology
+│   ├── ad_reports.py               # Report data queries
+│   ├── ad_schema.py                # Schema class/attribute queries
+│   ├── ad_search.py                # Cross-object search
+│   ├── ad_service_accounts.py      # Service account detection
+│   ├── ad_sites.py                 # Sites & Services queries
+│   ├── ad_spn.py                   # SPN read/write
+│   ├── ad_token_size.py            # Token size calculation
+│   ├── ad_users.py                 # User CRUD
+│   ├── app_settings.py             # SQLite settings storage
+│   ├── audit.py                    # SQLite audit logging
+│   ├── dynamic_groups.py           # SQLite dynamic group rules
+│   ├── rbac.py                     # Role & permission checking
+│   └── scheduled_reports.py        # SQLite report schedules
+│
+├── templates/                      # Jinja2 templates
+│   ├── base.html                   # Layout with sidebar navigation
+│   ├── index.html                  # Landing redirect
+│   ├── dashboard.html              # Dashboard with Chart.js
+│   ├── partials/
+│   │   ├── confirm_modal.html      # Reusable confirmation dialog
+│   │   └── flash_messages.html     # Flash message alerts
+│   ├── acl/
+│   │   └── index.html
+│   ├── activity/
+│   │   └── index.html
+│   ├── ad_health/
+│   │   └── index.html
+│   ├── attributes/
+│   │   ├── index.html
+│   │   └── edit.html
+│   ├── audit/
+│   │   └── log.html
+│   ├── auth/
+│   │   └── login.html
+│   ├── bitlocker/
+│   │   ├── index.html
+│   │   └── computer.html
+│   ├── bulk_attr/
+│   │   └── index.html
+│   ├── bulk_groups/
+│   │   └── index.html
+│   ├── computers/
+│   │   ├── list.html
+│   │   ├── detail.html
+│   │   └── create.html
+│   ├── delegation/
+│   │   ├── index.html
+│   │   └── acl.html
+│   ├── dns/
+│   │   ├── zones.html
+│   │   └── records.html
+│   ├── dynamic_groups/
+│   │   ├── index.html
+│   │   ├── form.html
+│   │   └── evaluate.html
+│   ├── fgpp/
+│   │   ├── index.html
+│   │   ├── detail.html
+│   │   └── effective.html
+│   ├── gmsa/
+│   │   ├── index.html
+│   │   └── detail.html
+│   ├── gpo/
+│   │   ├── list.html
+│   │   └── detail.html
+│   ├── group_nesting/
+│   │   ├── index.html
+│   │   └── circular.html
+│   ├── groups/
+│   │   ├── list.html
+│   │   ├── detail.html
+│   │   ├── create.html
+│   │   └── edit.html
+│   ├── laps/
+│   │   ├── index.html
+│   │   └── view.html
+│   ├── ldap_query/
+│   │   └── index.html
+│   ├── lockout/
+│   │   ├── index.html
+│   │   └── detail.html
+│   ├── orgchart/
+│   │   └── index.html
+│   ├── ous/
+│   │   └── tree.html
+│   ├── photos/
+│   │   └── view.html
+│   ├── recycle/
+│   │   └── list.html
+│   ├── replication/
+│   │   └── index.html
+│   ├── reports/
+│   │   ├── password_expiry.html
+│   │   ├── privileged.html
+│   │   └── stale_objects.html
+│   ├── scheduled_reports/
+│   │   └── index.html
+│   ├── schema/
+│   │   └── index.html
+│   ├── search/
+│   │   └── results.html
+│   ├── service_accounts/
+│   │   └── index.html
+│   ├── settings/
+│   │   └── index.html
+│   ├── sites/
+│   │   └── index.html
+│   ├── spn/
+│   │   ├── index.html
+│   │   └── detail.html
+│   ├── token_size/
+│   │   └── index.html
+│   ├── users/
+│   │   ├── list.html
+│   │   ├── detail.html
+│   │   ├── create.html
+│   │   ├── edit.html
+│   │   ├── copy.html
+│   │   ├── compare.html
+│   │   └── bulk.html
+│   └── workflows/
+│       ├── onboard.html
+│       └── offboard.html
+│
 └── static/
-    ├── css/style.css       # Custom styles + dark mode
-    └── js/app.js           # Theme toggle, DataTables init, utilities
+    ├── css/
+    │   └── style.css               # Custom styles + dark mode
+    └── js/
+        ├── app.js                  # Theme toggle, DataTables init, utilities
+        └── ou-tree.js              # OU tree interactive behavior
 ```
 
 ### Tech Stack

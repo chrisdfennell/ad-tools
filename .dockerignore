@@ -31,6 +31,9 @@ CHANGELOG.md
 .env
 .env.example
 
+# Claude Code
+.claude/
+
 # Application data
 data/
 *.db
