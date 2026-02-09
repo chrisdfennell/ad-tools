@@ -409,18 +409,6 @@ docker build -t ad-tools .
 docker compose up -d
 ```
 
-## Publishing to Docker Hub
-
-```bash
-# Build and tag
-docker build -t fennch/ad-tools:latest -t fennch/ad-tools:1.0.0 .
-
-# Push
-docker login
-docker push fennch/ad-tools:latest
-docker push fennch/ad-tools:1.0.0
-```
-
 ## Contributing
 
 Contributions are welcome! Please open an issue or pull request.
